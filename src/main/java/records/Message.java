@@ -1,11 +1,12 @@
-package dto;
+package records;
 
+import interfaces.Content;
 import java.time.Instant;
 
 public record Message(
-        Long id,
-        Long chatId,
-        Long senderId,
+        long id,
+        long chatId,
+        long senderId,
         Content content,
         Instant sentAt
 ) {

@@ -1,7 +1,7 @@
-package dto;
+package records;
 
 public record Chat(
-        Long id,
+        long id,
         String title
 ) {
 }

@@ -1,7 +1,7 @@
-package dto;
+package records;
 
 public record User(
-        Long id,
+        long id,
         String username,
         String displayName
 ) {
