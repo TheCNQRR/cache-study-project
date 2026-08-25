@@ -1,4 +1,4 @@
-package records;
+package model;
 
 import interfaces.Content;
 import java.time.Instant;

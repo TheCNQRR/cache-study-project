@@ -1,4 +1,4 @@
-package records;
+package model;
 
 public record Chat(
         long id,
