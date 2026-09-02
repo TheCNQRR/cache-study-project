@@ -38,6 +38,7 @@ public final class ChatService {
             case Content.TextContent t -> t.text().length() > 50 ? t.text().substring(0, 50) : t.text();
             case Content.ImageContent i -> "[изображение]";
             case Content.FileContent f -> "[файл]" + f.name();
+            case Content.VideoContent v -> "[видео]" + v.url();
         };
     }
 
@@ -135,6 +136,7 @@ public final class ChatService {
                      case Content.TextContent _ -> "TextContent";
                      case Content.ImageContent _ -> "ImageContent";
                      case Content.FileContent _ -> "FileContent";
+                     case Content.VideoContent _ -> "VideoContent";
                  }, Collectors.counting()));
     }
 
@@ -155,5 +157,11 @@ public final class ChatService {
                         entry ->
                                 entry.getValue().stream().max(Comparator.comparing(Message::sentAt)).orElseThrow()
                 ));
+    }
+
+    Optional<Message> getLastMessageReduce(long chatId) {
+        List<Message> snapshot = getMessagesByChatId(chatId);
+
+        return snapshot.stream().reduce((a, b) -> a.sentAt().isAfter(b.sentAt()) ? a : b);
     }
 }
