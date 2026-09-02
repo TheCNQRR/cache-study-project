@@ -1,3 +1,5 @@
+package by.java.enterprise;
+
 public class CacheEntry<V> {
     private V value;
     public V getValue() {

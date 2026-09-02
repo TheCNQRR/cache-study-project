@@ -1,3 +1,5 @@
+package by.java.enterprise;
+
 public class Main {
     public static void main(String[] args) throws InterruptedException {
 

@@ -1,12 +1,15 @@
-package service;
+package by.java.enterprise.service;
 
-import interfaces.Content;
-import model.Message;
+import by.java.enterprise.interfaces.Content;
+import by.java.enterprise.model.Chat;
+import by.java.enterprise.model.Message;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public final class ChatService {
@@ -14,6 +17,8 @@ public final class ChatService {
     * Хранит id чата в качестве ключа и список его сообщений
      */
     private ConcurrentHashMap<Long, List<Message>> messages;
+    private final AtomicLong chatIdCounter = new AtomicLong(0);
+    private final AtomicLong messageIdCounter = new AtomicLong(0);
 
     public HashMap<Long, List<Message>> getMessages() {
         return new HashMap<>(messages);
@@ -21,6 +26,23 @@ public final class ChatService {
 
     public List<Message> getMessagesByChatId(long chatId) {
         return messages.getOrDefault(chatId, new ArrayList<>());
+    }
+
+    public Chat createChat(String title) {
+        return new Chat(
+                chatIdCounter.getAndIncrement(),
+                title
+        );
+    }
+
+    public Message createMessage(long chatId, long senderId, Content content) {
+        return new Message(
+               messageIdCounter.getAndIncrement(),
+                chatId,
+                senderId,
+                content,
+                Instant.now()
+        );
     }
 
     public Optional<Message> getLastMessage(long chatId) {

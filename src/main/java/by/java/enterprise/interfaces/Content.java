@@ -1,4 +1,4 @@
-package interfaces;
+package by.java.enterprise.interfaces;
 
 public sealed interface Content {
     record TextContent(String text) implements Content {}

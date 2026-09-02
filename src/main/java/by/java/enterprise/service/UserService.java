@@ -1,17 +1,27 @@
-package service;
+package by.java.enterprise.service;
 
-import model.User;
+import by.java.enterprise.model.User;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class UserService {
     private ConcurrentHashMap<Long, User> users;
+    private final AtomicLong idCounter = new AtomicLong(0);
 
     public HashMap<Long, User> getUsers() {
         return new HashMap<>(users);
+    }
+
+    public User createUser(String username, String displayName) {
+        return new User(
+                idCounter.getAndIncrement(),
+                username,
+                displayName
+        );
     }
 
 
