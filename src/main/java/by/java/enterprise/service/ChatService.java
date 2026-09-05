@@ -1,8 +1,17 @@
 package by.java.enterprise.service;
 
+import by.java.enterprise.dto.request.ChatStoryRequest;
+import by.java.enterprise.dto.request.CreateChatRequest;
+import by.java.enterprise.dto.request.CreateMessageRequest;
+import by.java.enterprise.dto.request.ViewMessageRequest;
+import by.java.enterprise.dto.response.ChatStoryResponse;
+import by.java.enterprise.dto.response.CreateChatResponse;
+import by.java.enterprise.dto.response.CreateMessageResponse;
+import by.java.enterprise.exception.MessageAlreadyViewed;
 import by.java.enterprise.interfaces.Content;
 import by.java.enterprise.model.Chat;
 import by.java.enterprise.model.Message;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -12,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+@Service
 public final class ChatService {
     /**
     * Хранит id чата в качестве ключа и список его сообщений
@@ -28,21 +38,71 @@ public final class ChatService {
         return messages.getOrDefault(chatId, new ArrayList<>());
     }
 
-    public Chat createChat(String title) {
-        return new Chat(
+    public CreateChatResponse createChat(CreateChatRequest request) {
+        Chat chat = new Chat(
                 chatIdCounter.getAndIncrement(),
-                title
+                request.title()
+        );
+
+        return new CreateChatResponse(
+                chat.id(),
+                chat.title()
         );
     }
 
-    public Message createMessage(long chatId, long senderId, Content content) {
-        return new Message(
-               messageIdCounter.getAndIncrement(),
-                chatId,
-                senderId,
-                content,
-                Instant.now()
+    public CreateMessageResponse createMessage(CreateMessageRequest request) {
+        Message message = new Message(
+                messageIdCounter.getAndIncrement(),
+                request.chatId(),
+                request.senderId(),
+                request.content(),
+                Instant.now(),
+                false
         );
+
+        return new CreateMessageResponse(
+                message.id(),
+                message.chatId(),
+                message.senderId(),
+                message.content(),
+                message.sentAt()
+        );
+    }
+
+    public ChatStoryResponse getChatStory(ChatStoryRequest request) {
+        List<Message> snapshot = getMessagesByChatId(request.chatId());
+
+        List<Message> paginationResponse = snapshot.stream()
+                .sorted(Comparator.comparing(Message::sentAt).reversed())
+                .limit(request.quantity())
+                .toList();
+
+        return new ChatStoryResponse(paginationResponse);
+    }
+
+    public void viewMessage(ViewMessageRequest request) {
+        List<Message> messages = getMessagesByChatId(request.chatId());
+
+        for (int i = 0; i < messages.size(); i++) {
+            if (messages.get(i).id() == request.messageId()) {
+                Message oldMessage = messages.get(i);
+                if (oldMessage.isViewed()) {
+                    throw new MessageAlreadyViewed("Сообщение уже просмотрено");
+                }
+
+                Message newMessage = new Message(
+                        oldMessage.id(),
+                        oldMessage.chatId(),
+                        oldMessage.senderId(),
+                        oldMessage.content(),
+                        oldMessage.sentAt(),
+                        true
+                );
+
+                messages.set(i, newMessage);
+                break;
+            }
+        }
     }
 
     public Optional<Message> getLastMessage(long chatId) {
