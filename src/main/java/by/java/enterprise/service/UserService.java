@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public final class UserService {
-    private ConcurrentHashMap<Long, User> users;
+    private ConcurrentHashMap<Long, User> users = new ConcurrentHashMap<>();;
     private final AtomicLong idCounter = new AtomicLong(0);
     private final CommonService commonService;
 
@@ -61,6 +61,8 @@ public final class UserService {
                 request.username(),
                 request.displayName()
         );
+
+        this.users.put(user.id(), user);
 
         return new CreateUserResponse(
                 user.id(),

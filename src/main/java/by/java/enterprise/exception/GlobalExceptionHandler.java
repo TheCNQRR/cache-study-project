@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
                 Timestamp.from(Instant.now()),
                 request.getDescription(false).replace("uri=", "")
         );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

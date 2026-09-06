@@ -56,7 +56,7 @@ public class ChatController {
     }
 
     @GetMapping("/{id}/story")
-    public ResponseEntity<ChatStoryResponse> getChatStory(@PathVariable long id, @RequestBody long quantity) {
+    public ResponseEntity<ChatStoryResponse> getChatStory(@PathVariable long id, @RequestParam(defaultValue = "10") long quantity) {
         ChatStoryRequest request = new ChatStoryRequest(id, quantity);
 
         ChatStoryResponse chatStory = chatService.getChatStory(request);

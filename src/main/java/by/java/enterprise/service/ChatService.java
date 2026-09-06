@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ public class ChatService {
     /**
     * Хранит id чата в качестве ключа и список его сообщений
      */
-    private ConcurrentHashMap<Long, List<Message>> messages;
+    private ConcurrentHashMap<Long, List<Message>> messages = new ConcurrentHashMap<>();;
     private final AtomicLong chatIdCounter = new AtomicLong(0);
     private final AtomicLong messageIdCounter = new AtomicLong(0);
     private final CommonService commonService;
@@ -65,10 +66,14 @@ public class ChatService {
     }
 
     public CreateChatResponse createChat(CreateChatRequest request) {
+        long chatId = chatIdCounter.getAndIncrement();
+
         Chat chat = new Chat(
-                chatIdCounter.getAndIncrement(),
+                chatId,
                 request.title()
         );
+
+        messages.put(chatId, new CopyOnWriteArrayList<>());
 
         return new CreateChatResponse(
                 chat.id(),
@@ -85,6 +90,9 @@ public class ChatService {
                 Instant.now(),
                 false
         );
+
+        List<Message> list = messages.computeIfAbsent(request.chatId(), k -> new CopyOnWriteArrayList<>());
+        list.add(message);
 
         return new CreateMessageResponse(
                 message.id(),
@@ -241,10 +249,10 @@ public class ChatService {
 
          return snapshot.values().stream().flatMap(Collection::stream)
                  .collect(Collectors.groupingBy(m -> switch (m.content()) {
-                     case Content.TextContent _ -> "TextContent";
-                     case Content.ImageContent _ -> "ImageContent";
-                     case Content.FileContent _ -> "FileContent";
-                     case Content.VideoContent _ -> "VideoContent";
+                     case Content.TextContent t -> "TextContent";
+                     case Content.ImageContent i -> "ImageContent";
+                     case Content.FileContent f -> "FileContent";
+                     case Content.VideoContent v -> "VideoContent";
                  }, Collectors.counting()));
     }
 
