@@ -1,5 +1,7 @@
 package by.java.enterprise.service;
 
+import by.java.enterprise.config.ChatProperties;
+import by.java.enterprise.controller.UserController;
 import by.java.enterprise.dto.request.ChatStoryRequest;
 import by.java.enterprise.dto.request.CreateChatRequest;
 import by.java.enterprise.dto.request.CreateMessageRequest;
@@ -7,10 +9,13 @@ import by.java.enterprise.dto.request.ViewMessageRequest;
 import by.java.enterprise.dto.response.ChatStoryResponse;
 import by.java.enterprise.dto.response.CreateChatResponse;
 import by.java.enterprise.dto.response.CreateMessageResponse;
-import by.java.enterprise.exception.MessageAlreadyViewed;
+import by.java.enterprise.exception.MessageAlreadyViewedException;
 import by.java.enterprise.interfaces.Content;
 import by.java.enterprise.model.Chat;
 import by.java.enterprise.model.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -22,13 +27,34 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
-public final class ChatService {
+public class ChatService {
     /**
     * Хранит id чата в качестве ключа и список его сообщений
      */
     private ConcurrentHashMap<Long, List<Message>> messages;
     private final AtomicLong chatIdCounter = new AtomicLong(0);
     private final AtomicLong messageIdCounter = new AtomicLong(0);
+    private final CommonService commonService;
+    private final ChatProperties chatProperties;
+    private final Logger log = LoggerFactory.getLogger(UserController.class);
+
+    @Value("${chat.default-page-limit}")
+    private int defaultPageLimit;
+
+    @Value("${spring.application.name}")
+    private String appName;
+
+    @Value("${app.features.search-enabled:false}")
+    private boolean searchEnabled;
+
+    private UserService userService;
+
+    public ChatService(UserService userService, CommonService commonService, ChatProperties chatProperties) {
+        this.userService = userService;
+        this.commonService = commonService;
+        this.chatProperties = chatProperties;
+        log.info("UserService hash: {}", System.identityHashCode(this.userService));
+    }
 
     public HashMap<Long, List<Message>> getMessages() {
         return new HashMap<>(messages);
@@ -87,7 +113,7 @@ public final class ChatService {
             if (messages.get(i).id() == request.messageId()) {
                 Message oldMessage = messages.get(i);
                 if (oldMessage.isViewed()) {
-                    throw new MessageAlreadyViewed("Сообщение уже просмотрено");
+                    throw new MessageAlreadyViewedException("Сообщение уже просмотрено");
                 }
 
                 Message newMessage = new Message(

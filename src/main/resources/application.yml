@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: chat-service
+
+app:
+  features:
+    search-enabled: true
+
+chat:
+  default-page-limit: 10
+
+server:
+  port: 8080

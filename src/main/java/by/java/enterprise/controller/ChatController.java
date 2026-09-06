@@ -9,16 +9,26 @@ import by.java.enterprise.dto.response.CreateChatResponse;
 import by.java.enterprise.dto.response.CreateMessageResponse;
 import by.java.enterprise.interfaces.Content;
 import by.java.enterprise.service.ChatService;
+import by.java.enterprise.service.MockSingletonService;
+import by.java.enterprise.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController("api/v1/chat")
+@RestController
+@RequestMapping("api/v1/chat")
 public class ChatController {
     private final ChatService chatService;
+    private final UserService userService;
+    private final MockSingletonService mockSingletonService;
 
-    public ChatController(ChatService chatService) {
+    public ChatController(ChatService chatService, UserService userService, MockSingletonService mockSingletonService) {
         this.chatService = chatService;
+        this.userService = userService;
+        this.mockSingletonService = mockSingletonService;
+        System.out.println(System.identityHashCode(this.userService));
+        mockSingletonService.printMockServiceHash();
+        mockSingletonService.printMockServiceHash();
     }
 
     @PostMapping
