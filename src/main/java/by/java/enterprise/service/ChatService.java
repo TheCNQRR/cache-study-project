@@ -113,6 +113,10 @@ public class ChatService {
             throw new GetChatStoryException("limit не может быть отрицательным");
         }
 
+        if (request.limit() > 100) {
+            throw new GetChatStoryException("limit не может превышать 100");
+        }
+
         List<Message> snapshot = getMessagesByChatId(request.chatId());
 
         List<Message> page = snapshot.stream()
