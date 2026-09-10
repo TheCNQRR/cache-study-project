@@ -8,23 +8,31 @@ import by.java.enterprise.dto.response.ChatStoryResponse;
 import by.java.enterprise.dto.response.CreateChatResponse;
 import by.java.enterprise.dto.response.CreateMessageResponse;
 import by.java.enterprise.interfaces.Content;
+import by.java.enterprise.interfaces.MessageSorter;
+import by.java.enterprise.model.Message;
 import by.java.enterprise.service.ChatService;
 import by.java.enterprise.service.MockSingletonService;
 import by.java.enterprise.service.UserService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/chats")
 public class ChatController {
     private final ChatService chatService;
     private final UserService userService;
+    private final MessageSorter messageSorter;
     private final MockSingletonService mockSingletonService;
 
-    public ChatController(ChatService chatService, UserService userService, MockSingletonService mockSingletonService) {
+    public ChatController(ChatService chatService, UserService userService, @Qualifier("byTimeAsc") MessageSorter messageSorter,
+                          MockSingletonService mockSingletonService) {
         this.chatService = chatService;
         this.userService = userService;
+        this.messageSorter = messageSorter;
         this.mockSingletonService = mockSingletonService;
         System.out.println(System.identityHashCode(this.userService));
         mockSingletonService.printMockServiceHash();
@@ -74,5 +82,13 @@ public class ChatController {
         chatService.viewMessage(request);
 
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @GetMapping("/{id}/messages/sorted")
+    public ResponseEntity<List<Message>> sortedMessages(@PathVariable long id) {
+        List<Message> sorted = chatService.getMessagesByChatId(id).stream()
+                .sorted(messageSorter)
+                .toList();
+        return ResponseEntity.ok(sorted);
     }
 }
