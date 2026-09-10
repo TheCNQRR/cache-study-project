@@ -94,9 +94,9 @@ public final class UserService {
     }
 
     User findUserOrThrow(long id) {
-        HashMap<Long, User> snapshot = getUsers();
+        HashMap<Long, User> usersList = getUsers();
 
-        return snapshot.entrySet().stream()
+        return usersList.entrySet().stream()
                 .filter(entry -> entry.getKey() == id)
                 .map(Map.Entry::getValue)
                 .findFirst()

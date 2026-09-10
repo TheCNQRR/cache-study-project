@@ -9,6 +9,7 @@ import by.java.enterprise.dto.request.ViewMessageRequest;
 import by.java.enterprise.dto.response.ChatStoryResponse;
 import by.java.enterprise.dto.response.CreateChatResponse;
 import by.java.enterprise.dto.response.CreateMessageResponse;
+import by.java.enterprise.exception.GetChatStoryException;
 import by.java.enterprise.exception.MessageAlreadyViewedException;
 import by.java.enterprise.interfaces.Content;
 import by.java.enterprise.model.Chat;
@@ -32,7 +33,7 @@ public class ChatService {
     /**
     * Хранит id чата в качестве ключа и список его сообщений
      */
-    private ConcurrentHashMap<Long, List<Message>> messages = new ConcurrentHashMap<>();;
+    private ConcurrentHashMap<Long, List<Message>> messages = new ConcurrentHashMap<>();
     private final AtomicLong chatIdCounter = new AtomicLong(0);
     private final AtomicLong messageIdCounter = new AtomicLong(0);
     private final CommonService commonService;
@@ -91,8 +92,8 @@ public class ChatService {
                 false
         );
 
-        List<Message> list = messages.computeIfAbsent(request.chatId(), k -> new CopyOnWriteArrayList<>());
-        list.add(message);
+        List<Message> messagesList = messages.computeIfAbsent(request.chatId(), k -> new CopyOnWriteArrayList<>());
+        messagesList.add(message);
 
         return new CreateMessageResponse(
                 message.id(),
@@ -104,14 +105,23 @@ public class ChatService {
     }
 
     public ChatStoryResponse getChatStory(ChatStoryRequest request) {
+        if (request.offset() < 0) {
+            throw new GetChatStoryException("offset не может быть отрицательным");
+        }
+
+        if (request.limit() < 0) {
+            throw new GetChatStoryException("limit не может быть отрицательным");
+        }
+
         List<Message> snapshot = getMessagesByChatId(request.chatId());
 
-        List<Message> paginationResponse = snapshot.stream()
+        List<Message> page = snapshot.stream()
                 .sorted(Comparator.comparing(Message::sentAt).reversed())
-                .limit(request.quantity())
+                .skip(request.offset())
+                .limit(request.limit())
                 .toList();
 
-        return new ChatStoryResponse(paginationResponse);
+        return new ChatStoryResponse(page);
     }
 
     public void viewMessage(ViewMessageRequest request) {
@@ -140,13 +150,13 @@ public class ChatService {
     }
 
     public Optional<Message> getLastMessage(long chatId) {
-        List<Message> snapshot = getMessagesByChatId(chatId);
+        List<Message> messagesList = getMessagesByChatId(chatId);
 
-        if (snapshot.isEmpty()) {
+        if (messagesList.isEmpty()) {
             return Optional.empty();
         }
 
-        return snapshot.stream().max(Comparator.comparing(Message::sentAt));
+        return messagesList.stream().max(Comparator.comparing(Message::sentAt));
     }
 
     public static String preview(Message m) {
@@ -159,9 +169,9 @@ public class ChatService {
     }
 
     public List<Message> search(long chatId, String query, int limit) {
-        HashMap<Long, List<Message>> snapshot = getMessages();
+        HashMap<Long, List<Message>> messagesList = getMessages();
 
-        return snapshot.entrySet().stream()
+        return messagesList.entrySet().stream()
                 .filter(entry -> entry.getKey() == chatId)
                 .flatMap(entry -> entry.getValue().stream())
                 .filter(
@@ -172,44 +182,44 @@ public class ChatService {
     }
 
     public Map<Long, Long> countByAuthor(long chatId) {
-        List<Message> snapshot = getMessagesByChatId(chatId);
+        List<Message> messagesList = getMessagesByChatId(chatId);
 
-        return snapshot.stream().collect(Collectors.groupingBy(Message::senderId, Collectors.counting()));
+        return messagesList.stream().collect(Collectors.groupingBy(Message::senderId, Collectors.counting()));
     }
 
     public Optional<Message> firstMentioning(long chatId, String query) {
-        List<Message> snapshot = getMessagesByChatId(chatId);
+        List<Message> messagesList = getMessagesByChatId(chatId);
 
-        return snapshot.stream().filter(
+        return messagesList.stream().filter(
                 message -> message.content() instanceof Content.TextContent(String text) &&
                         text.contains(query)).findFirst();
     }
 
     public List<Message> lastMessages(long chatId, int n) {
-        List<Message> snapshot = getMessagesByChatId(chatId);
+        List<Message> messagesList = getMessagesByChatId(chatId);
 
-        return snapshot.stream().sorted(Comparator.comparing(Message::sentAt)).skip(n).toList();
+        return messagesList.stream().sorted(Comparator.comparing(Message::sentAt)).skip(n).toList();
     }
 
     public Map<LocalDate, Long> countByDay(long chatId) {
-        List<Message> snapshot = getMessagesByChatId(chatId);
+        List<Message> messagesList = getMessagesByChatId(chatId);
 
-        return snapshot.stream().collect(Collectors.groupingBy(
+        return messagesList.stream().collect(Collectors.groupingBy(
                 m -> m.sentAt().atZone(ZoneOffset.UTC).toLocalDate(), Collectors.counting()));
     }
 
     public Optional<Long> mostActiveAuthor(long chatId) {
-        List<Message> snapshot = getMessagesByChatId(chatId);
+        List<Message> messagesList = getMessagesByChatId(chatId);
 
-        Map<Long, Long> countByAuthor = snapshot.stream().collect(Collectors.groupingBy(Message::senderId, Collectors.counting()));
+        Map<Long, Long> countByAuthor = messagesList.stream().collect(Collectors.groupingBy(Message::senderId, Collectors.counting()));
 
         return countByAuthor.entrySet().stream().max(Map.Entry.comparingByValue()).map(Map.Entry::getKey);
     }
 
     public Set<String> allWords(long chatId) {
-        List<Message> snapshot = getMessagesByChatId(chatId);
+        List<Message> messagesList = getMessagesByChatId(chatId);
 
-        List<Message> textMessages = snapshot.stream().filter(message -> message.content() instanceof Content.TextContent).toList();
+        List<Message> textMessages = messagesList.stream().filter(message -> message.content() instanceof Content.TextContent).toList();
 
         return textMessages.stream()
                 .map(message ->  ((Content.TextContent) message.content()).text().split(" "))
@@ -218,9 +228,9 @@ public class ChatService {
     }
 
     public Map<Long, Long> topChatsByActivity(int n) {
-        HashMap<Long, List<Message>> snapshot = getMessages();
+        HashMap<Long, List<Message>> messagesList = getMessages();
 
-        Map<Long, Long> messagesCount = snapshot.values().stream()
+        Map<Long, Long> messagesCount = messagesList.values().stream()
                 .flatMap(Collection::stream)
                 .collect(Collectors.groupingBy(Message::chatId, Collectors.counting()));
 
@@ -236,18 +246,18 @@ public class ChatService {
     }
 
     public long totalFileSize() {
-        HashMap<Long, List<Message>> snapshot = getMessages();
+        HashMap<Long, List<Message>> messagesList = getMessages();
 
-        return snapshot.values().stream().flatMap(Collection::stream)
+        return messagesList.values().stream().flatMap(Collection::stream)
                 .filter(message -> message.content() instanceof Content.FileContent)
                 .mapToLong(message -> ((Content.FileContent) message.content()).sizeBytes())
                 .sum();
     }
 
     public Map<String, Long> countByContentType() {
-        HashMap<Long, List<Message>> snapshot = getMessages();
+        HashMap<Long, List<Message>> messagesList = getMessages();
 
-         return snapshot.values().stream().flatMap(Collection::stream)
+         return messagesList.values().stream().flatMap(Collection::stream)
                  .collect(Collectors.groupingBy(m -> switch (m.content()) {
                      case Content.TextContent t -> "TextContent";
                      case Content.ImageContent i -> "ImageContent";
@@ -257,17 +267,17 @@ public class ChatService {
     }
 
     public Map<Boolean, List<Message>> splitByImage() {
-        HashMap<Long, List<Message>> snapshot = getMessages();
+        HashMap<Long, List<Message>> messagesList = getMessages();
 
-        return snapshot.values().stream().flatMap(Collection::stream)
+        return messagesList.values().stream().flatMap(Collection::stream)
                 .collect(Collectors.partitioningBy(
                         message -> message.content() instanceof Content.ImageContent));
     }
 
     public Map<Long, Message> lastMessagePerChat() {
-        HashMap<Long, List<Message>> snapshot = getMessages();
+        HashMap<Long, List<Message>> messagesList = getMessages();
 
-        return snapshot.entrySet().stream()
+        return messagesList.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry ->

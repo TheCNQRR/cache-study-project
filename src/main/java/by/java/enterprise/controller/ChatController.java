@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/v1/chat")
+@RequestMapping("api/v1/chats")
 public class ChatController {
     private final ChatService chatService;
     private final UserService userService;
@@ -55,9 +55,13 @@ public class ChatController {
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
-    @GetMapping("/{id}/story")
-    public ResponseEntity<ChatStoryResponse> getChatStory(@PathVariable long id, @RequestParam(defaultValue = "10") long quantity) {
-        ChatStoryRequest request = new ChatStoryRequest(id, quantity);
+    @GetMapping("/{id}/messages")
+    public ResponseEntity<ChatStoryResponse> getChatHistory(
+            @PathVariable long id,
+            @RequestParam(defaultValue = "0") long offset,
+            @RequestParam(defaultValue = "20") long limit
+    ) {
+        ChatStoryRequest request = new ChatStoryRequest(id, offset, limit);
 
         ChatStoryResponse chatStory = chatService.getChatStory(request);
 
