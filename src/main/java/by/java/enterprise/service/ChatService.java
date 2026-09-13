@@ -117,9 +117,9 @@ public class ChatService {
             throw new GetChatStoryException("limit не может превышать 100");
         }
 
-        List<Message> snapshot = getMessagesByChatId(request.chatId());
+        List<Message> messageList = getMessagesByChatId(request.chatId());
 
-        List<Message> page = snapshot.stream()
+        List<Message> page = messageList.stream()
                 .sorted(Comparator.comparing(Message::sentAt).reversed())
                 .skip(request.offset())
                 .limit(request.limit())
