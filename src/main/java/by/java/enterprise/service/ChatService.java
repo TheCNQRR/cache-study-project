@@ -12,6 +12,7 @@ import by.java.enterprise.dto.response.CreateMessageResponse;
 import by.java.enterprise.exception.GetChatStoryException;
 import by.java.enterprise.exception.MessageAlreadyViewedException;
 import by.java.enterprise.interfaces.Content;
+import by.java.enterprise.interfaces.NotificationService;
 import by.java.enterprise.model.Chat;
 import by.java.enterprise.model.Message;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ public class ChatService {
     private final AtomicLong chatIdCounter = new AtomicLong(0);
     private final AtomicLong messageIdCounter = new AtomicLong(0);
     private final CommonService commonService;
+    private final List<NotificationService> notifications;
     private final ChatProperties chatProperties;
     private final Logger log = LoggerFactory.getLogger(UserController.class);
 
@@ -51,9 +53,14 @@ public class ChatService {
 
     private UserService userService;
 
-    public ChatService(UserService userService, CommonService commonService, ChatProperties chatProperties) {
+    public ChatService(
+            UserService userService,
+            CommonService commonService,
+            List<NotificationService> notifications,
+            ChatProperties chatProperties) {
         this.userService = userService;
         this.commonService = commonService;
+        this.notifications = notifications;
         this.chatProperties = chatProperties;
         log.info("UserService hash: {}", System.identityHashCode(this.userService));
     }
