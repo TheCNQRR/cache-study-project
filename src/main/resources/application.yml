@@ -11,3 +11,36 @@ chat:
 
 server:
   port: 8080
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true

@@ -13,6 +13,11 @@ import by.java.enterprise.model.Message;
 import by.java.enterprise.service.ChatService;
 import by.java.enterprise.service.MockSingletonService;
 import by.java.enterprise.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +27,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/chats")
+@Tag(
+        name = "Чаты",
+        description = "Все методы для работы с чатами и сообщениями"
+)
 public class ChatController {
     private final ChatService chatService;
     private final UserService userService;
@@ -84,8 +93,22 @@ public class ChatController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(
+            summary = "Получить список отсортированных сообщений",
+            description = "По заданному id чата возвращает список отсортированных сообщений из этого чата"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Сообщения получены",
+                    content = @io.swagger.v3.oas.annotations.media.Content
+            )
+    })
     @GetMapping("/{id}/messages/sorted")
-    public ResponseEntity<List<Message>> sortedMessages(@PathVariable long id) {
+    public ResponseEntity<List<Message>> sortedMessages(
+            @Parameter(description = "id чата")
+            @PathVariable long id
+    ) {
         List<Message> sorted = chatService.getMessagesByChatId(id).stream()
                 .sorted(messageSorter)
                 .toList();
