@@ -97,13 +97,13 @@ public class ChatController {
             summary = "Получить список отсортированных сообщений",
             description = "По заданному id чата возвращает список отсортированных сообщений из этого чата"
     )
-    @ApiResponses({
+    @ApiResponses(
             @ApiResponse(
                     responseCode = "200",
                     description = "Сообщения получены",
-                    content = @io.swagger.v3.oas.annotations.media.Content
+                    content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")
             )
-    })
+    ) // Посмотреть как сделать по другому
     @GetMapping("/{id}/messages/sorted")
     public ResponseEntity<List<Message>> sortedMessages(
             @Parameter(description = "id чата")

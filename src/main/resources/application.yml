@@ -1,6 +1,8 @@
 spring:
   application:
     name: chat-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cache
 
 app:
   features:

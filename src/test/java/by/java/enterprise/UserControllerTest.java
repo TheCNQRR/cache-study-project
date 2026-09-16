@@ -28,7 +28,7 @@ public class UserControllerTest {
     }
 
     @Test
-    void getUserById_returns200_whenUserExists() throws Exception {
+    void getUserById_returns200_whenUserExists() throws Exception { // TODO привести к единому код стайлу, добавить test в начале
         CreateUserResponse createdUser = userService.createUser(new CreateUserRequest("username", "displayName"));
 
         mockMvc.perform(get("/api/v1/users/{id}", createdUser.id()))
