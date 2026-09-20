@@ -1,117 +1,65 @@
 package by.java.enterprise.controller;
 
-import by.java.enterprise.dto.request.ChatStoryRequest;
 import by.java.enterprise.dto.request.CreateChatRequest;
 import by.java.enterprise.dto.request.CreateMessageRequest;
-import by.java.enterprise.dto.request.ViewMessageRequest;
-import by.java.enterprise.dto.response.ChatStoryResponse;
 import by.java.enterprise.dto.response.CreateChatResponse;
 import by.java.enterprise.dto.response.CreateMessageResponse;
-import by.java.enterprise.interfaces.Content;
-import by.java.enterprise.interfaces.MessageSorter;
-import by.java.enterprise.record.Message;
+import by.java.enterprise.model.Chat;
+import by.java.enterprise.model.Message;
 import by.java.enterprise.service.ChatService;
-import by.java.enterprise.service.MockSingletonService;
-import by.java.enterprise.service.UserService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Qualifier;
+import by.java.enterprise.service.MessageService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/v1/chats")
-@Tag(
-        name = "Чаты",
-        description = "Все методы для работы с чатами и сообщениями"
-)
 public class ChatController {
-    private final ChatService chatService;
-    private final UserService userService;
-    private final MessageSorter messageSorter;
-    private final MockSingletonService mockSingletonService;
 
-    public ChatController(ChatService chatService, UserService userService, @Qualifier("byTimeAsc") MessageSorter messageSorter,
-                          MockSingletonService mockSingletonService) {
+    private final ChatService chatService;
+    private final MessageService messageService;
+
+    public ChatController(ChatService chatService, MessageService messageService) {
         this.chatService = chatService;
-        this.userService = userService;
-        this.messageSorter = messageSorter;
-        this.mockSingletonService = mockSingletonService;
-        System.out.println(System.identityHashCode(this.userService));
-        mockSingletonService.printMockServiceHash();
-        mockSingletonService.printMockServiceHash();
+        this.messageService = messageService;
     }
 
     @PostMapping
-    public ResponseEntity<?> createChat(@RequestBody CreateChatRequest request) {
+    public ResponseEntity<CreateChatResponse> createChat(@RequestBody CreateChatRequest request) {
         CreateChatResponse chat = chatService.createChat(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(chat);
     }
 
-    @PostMapping("/{chatId}/message")
-    public ResponseEntity<CreateMessageResponse> createMessage(
-            @PathVariable long chatId,
-            @RequestHeader("x-current-user-id") long senderId,
-            @RequestBody Content content
-            ) {
-        CreateMessageRequest request = new CreateMessageRequest(
-                chatId,
-                senderId,
-                content
-        );
+    @GetMapping
+    public ResponseEntity<List<Chat>> getChats() {
+        List<Chat> chats = chatService.findAllChats();
 
-        CreateMessageResponse message = chatService.createMessage(request);
+        return ResponseEntity.status(HttpStatus.OK).body(chats);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getChatById(@PathVariable long id) {
+        Optional<Chat> chat = chatService.findChatById(id);
+
+        return chat.map(value -> ResponseEntity.status(HttpStatus.OK).body(value)).orElseGet(() ->
+                ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    @PostMapping("/{chatId}/messages")
+    public ResponseEntity<CreateMessageResponse> sendMessage(@RequestBody CreateMessageRequest request) {
+        CreateMessageResponse message = messageService.createMessage(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
-    @GetMapping("/{id}/messages")
-    public ResponseEntity<ChatStoryResponse> getChatHistory(
-            @PathVariable long id,
-            @RequestParam(defaultValue = "0") long offset,
-            @RequestParam(defaultValue = "20") long limit
-    ) {
-        ChatStoryRequest request = new ChatStoryRequest(id, offset, limit);
+    @GetMapping("/{chatId}/messages")
+    public ResponseEntity<List<Message>> getMessagesByChatId(@PathVariable long chatId) {
+        List<Message> messages = messageService.findAllMessages(chatId);
 
-        ChatStoryResponse chatStory = chatService.getChatStory(request);
-
-        return ResponseEntity.status(HttpStatus.OK).body(chatStory);
-    }
-
-    @PatchMapping("/{chatId}/messages/{messageId}")
-    public ResponseEntity<?> viewMessage(@PathVariable long chatId, @PathVariable long messageId) {
-        ViewMessageRequest request = new ViewMessageRequest(chatId, messageId);
-        chatService.viewMessage(request);
-
-        return ResponseEntity.status(HttpStatus.OK).build();
-    }
-
-    @Operation(
-            summary = "Получить список отсортированных сообщений",
-            description = "По заданному id чата возвращает список отсортированных сообщений из этого чата"
-    )
-    @ApiResponses(
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Сообщения получены",
-                    content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json")
-            )
-    ) // Посмотреть как сделать по другому
-    @GetMapping("/{id}/messages/sorted")
-    public ResponseEntity<List<Message>> sortedMessages(
-            @Parameter(description = "id чата")
-            @PathVariable long id
-    ) {
-        List<Message> sorted = chatService.getMessagesByChatId(id).stream()
-                .sorted(messageSorter)
-                .toList();
-        return ResponseEntity.ok(sorted);
+        return ResponseEntity.status(HttpStatus.OK).body(messages);
     }
 }

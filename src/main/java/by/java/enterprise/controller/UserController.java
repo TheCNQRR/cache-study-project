@@ -4,6 +4,7 @@ import by.java.enterprise.dto.request.CreateUserRequest;
 import by.java.enterprise.dto.response.CreateUserResponse;
 import by.java.enterprise.dto.response.UserResponse;
 import by.java.enterprise.dto.response.UsersResponse;
+import by.java.enterprise.model.User;
 import by.java.enterprise.service.UserService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -13,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/v1/users")
@@ -34,16 +37,17 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<UsersResponse> getAllUsers() {
-        UsersResponse users = userService.findAllUsers();
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.findAllUsers();
 
         return ResponseEntity.status(HttpStatus.OK).body(users);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUser(@PathVariable long id) {
-        UserResponse user = userService.findUser(id);
+    public ResponseEntity<User> getUser(@PathVariable long id) {
+        Optional<User> user = userService.findUserById(id);
 
-        return ResponseEntity.status(HttpStatus.OK).body(user);
+        return user.map(value -> ResponseEntity.status(HttpStatus.OK).body(value)).orElseGet(() ->
+                ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 }

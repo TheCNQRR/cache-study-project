@@ -19,7 +19,18 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ApiError> handleNotFound(UserNotFoundException e, WebRequest request) {
+    public ResponseEntity<ApiError> handleUserNotFound(UserNotFoundException e, WebRequest request) {
+        ApiError error = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                "Ресурс не найден: " +  e.getMessage(),
+                Timestamp.from(Instant.now()),
+                request.getDescription(false).replace("uri=", "")
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(ChatNotFoundException.class)
+    public ResponseEntity<ApiError> handleChatNotFound(ChatNotFoundException e, WebRequest request) {
         ApiError error = new ApiError(
                 HttpStatus.NOT_FOUND.value(),
                 "Ресурс не найден: " +  e.getMessage(),

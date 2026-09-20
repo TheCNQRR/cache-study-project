@@ -14,7 +14,7 @@ public class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(null, null);
+        userService = new UserService(null);
     }
 
     @Test

@@ -26,12 +26,10 @@ public class Message {
     LocalDateTime createdAt;
 
     public Message() {}
-    public Message(Long id, Chat chat, String text, LocalDateTime createdAt, User sender) {
-        this.id = id;
+    public Message(Chat chat, User sender, String text, LocalDateTime createdAt) {
         this.chat = chat;
-        this.text = text;
-        this.createdAt = createdAt;
         this.sender = sender;
+        this.text = text;
     }
 
     public Long getId() {

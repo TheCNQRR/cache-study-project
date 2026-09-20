@@ -1,304 +1,56 @@
 package by.java.enterprise.service;
 
-import by.java.enterprise.config.ChatProperties;
-import by.java.enterprise.controller.UserController;
-import by.java.enterprise.dto.request.ChatStoryRequest;
 import by.java.enterprise.dto.request.CreateChatRequest;
-import by.java.enterprise.dto.request.CreateMessageRequest;
-import by.java.enterprise.dto.request.ViewMessageRequest;
-import by.java.enterprise.dto.response.ChatStoryResponse;
 import by.java.enterprise.dto.response.CreateChatResponse;
-import by.java.enterprise.dto.response.CreateMessageResponse;
-import by.java.enterprise.exception.GetChatStoryException;
-import by.java.enterprise.exception.MessageAlreadyViewedException;
-import by.java.enterprise.interfaces.Content;
-import by.java.enterprise.interfaces.NotificationService;
-import by.java.enterprise.record.Chat;
-import by.java.enterprise.record.Message;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import by.java.enterprise.exception.UserNotFoundException;
+import by.java.enterprise.model.Chat;
+import by.java.enterprise.model.User;
+import by.java.enterprise.repository.ChatRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ChatService {
-    /**
-    * Хранит id чата в качестве ключа и список его сообщений
-     */
-    private ConcurrentHashMap<Long, List<Message>> messages = new ConcurrentHashMap<>();
-    private final AtomicLong chatIdCounter = new AtomicLong(0);
-    private final AtomicLong messageIdCounter = new AtomicLong(0);
-    private final CommonService commonService;
-    private final List<NotificationService> notifications;
-    private final ChatProperties chatProperties;
-    private final Logger log = LoggerFactory.getLogger(UserController.class);
 
-    @Value("${chat.default-page-limit}")
-    private int defaultPageLimit;
+    private final UserService userService;
+    private final ChatRepository chatRepository;
 
-    @Value("${spring.application.name}")
-    private String appName;
-
-    @Value("${app.features.search-enabled:false}")
-    private boolean searchEnabled;
-
-    private UserService userService;
-
-    public ChatService(
-            UserService userService,
-            CommonService commonService,
-            List<NotificationService> notifications,
-            ChatProperties chatProperties) {
+    public ChatService(UserService userService, ChatRepository chatRepository) {
         this.userService = userService;
-        this.commonService = commonService;
-        this.notifications = notifications;
-        this.chatProperties = chatProperties;
-        log.info("UserService hash: {}", System.identityHashCode(this.userService));
+        this.chatRepository = chatRepository;
     }
 
-    public HashMap<Long, List<Message>> getMessages() {
-        return new HashMap<>(messages);
+    public List<Chat> findAllChats() {
+        return chatRepository.findAll();
     }
 
-    public List<Message> getMessagesByChatId(long chatId) {
-        return messages.getOrDefault(chatId, new ArrayList<>());
+    public Optional<Chat> findChatById(long id) {
+        return chatRepository.findById(id);
     }
 
     public CreateChatResponse createChat(CreateChatRequest request) {
-        long chatId = chatIdCounter.getAndIncrement();
+        Optional<User> foundUser = userService.findUserById(request.createdBy());
 
-        Chat chat = new Chat(
-                chatId,
-                request.title()
+        if (foundUser.isEmpty()) {
+            throw new UserNotFoundException("user with id {" + request.createdBy() + "} not found");
+        }
+
+        User user = foundUser.get();
+
+        Chat chat = chatRepository.save(
+                new Chat(
+                     request.title(),
+                     user
+                )
         );
-
-        messages.put(chatId, new CopyOnWriteArrayList<>());
 
         return new CreateChatResponse(
-                chat.id(),
-                chat.title()
+                chat.getId(),
+                chat.getTitle(),
+                chat.getCreatedBy(),
+                chat.getCreatedAt()
         );
-    }
-
-    public CreateMessageResponse createMessage(CreateMessageRequest request) {
-        Message message = new Message(
-                messageIdCounter.getAndIncrement(),
-                request.chatId(),
-                request.senderId(),
-                request.content(),
-                Instant.now(),
-                false
-        );
-
-        List<Message> messagesList = messages.computeIfAbsent(request.chatId(), k -> new CopyOnWriteArrayList<>());
-        messagesList.add(message);
-
-        return new CreateMessageResponse(
-                message.id(),
-                message.chatId(),
-                message.senderId(),
-                message.content(),
-                message.sentAt()
-        );
-    }
-
-    public ChatStoryResponse getChatStory(ChatStoryRequest request) {
-        if (request.offset() < 0) {
-            throw new GetChatStoryException("offset не может быть отрицательным");
-        }
-
-        if (request.limit() < 0) {
-            throw new GetChatStoryException("limit не может быть отрицательным");
-        }
-
-        if (request.limit() > 100) {
-            throw new GetChatStoryException("limit не может превышать 100");
-        }
-
-        List<Message> messageList = getMessagesByChatId(request.chatId());
-
-        List<Message> page = messageList.stream()
-                .sorted(Comparator.comparing(Message::sentAt).reversed())
-                .skip(request.offset())
-                .limit(request.limit())
-                .toList();
-
-        return new ChatStoryResponse(page);
-    }
-
-    public void viewMessage(ViewMessageRequest request) {
-        List<Message> messages = getMessagesByChatId(request.chatId());
-
-        for (int i = 0; i < messages.size(); i++) {
-            if (messages.get(i).id() == request.messageId()) {
-                Message oldMessage = messages.get(i);
-                if (oldMessage.isViewed()) {
-                    throw new MessageAlreadyViewedException("Сообщение уже просмотрено");
-                }
-
-                Message newMessage = new Message(
-                        oldMessage.id(),
-                        oldMessage.chatId(),
-                        oldMessage.senderId(),
-                        oldMessage.content(),
-                        oldMessage.sentAt(),
-                        true
-                );
-
-                messages.set(i, newMessage);
-                break;
-            }
-        }
-    }
-
-    public Optional<Message> getLastMessage(long chatId) {
-        List<Message> messagesList = getMessagesByChatId(chatId);
-
-        if (messagesList.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return messagesList.stream().max(Comparator.comparing(Message::sentAt));
-    }
-
-    public static String preview(Message m) {
-        return switch (m.content()) {
-            case Content.TextContent t -> t.text().length() > 50 ? t.text().substring(0, 50) : t.text();
-            case Content.ImageContent i -> "[изображение]";
-            case Content.FileContent f -> "[файл]" + f.name();
-            case Content.VideoContent v -> "[видео]" + v.url();
-        };
-    }
-
-    public List<Message> search(long chatId, String query, int limit) {
-        HashMap<Long, List<Message>> messagesList = getMessages();
-
-        return messagesList.entrySet().stream()
-                .filter(entry -> entry.getKey() == chatId)
-                .flatMap(entry -> entry.getValue().stream())
-                .filter(
-                        messages -> messages.content() instanceof Content.TextContent(String text) &&
-                                text.toLowerCase().contains(query.toLowerCase()))
-                .limit(limit)
-                .toList();
-    }
-
-    public Map<Long, Long> countByAuthor(long chatId) {
-        List<Message> messagesList = getMessagesByChatId(chatId);
-
-        return messagesList.stream().collect(Collectors.groupingBy(Message::senderId, Collectors.counting()));
-    }
-
-    public Optional<Message> firstMentioning(long chatId, String query) {
-        List<Message> messagesList = getMessagesByChatId(chatId);
-
-        return messagesList.stream().filter(
-                message -> message.content() instanceof Content.TextContent(String text) &&
-                        text.contains(query)).findFirst();
-    }
-
-    public List<Message> lastMessages(long chatId, int n) {
-        List<Message> messagesList = getMessagesByChatId(chatId);
-
-        return messagesList.stream().sorted(Comparator.comparing(Message::sentAt)).skip(n).toList();
-    }
-
-    public Map<LocalDate, Long> countByDay(long chatId) {
-        List<Message> messagesList = getMessagesByChatId(chatId);
-
-        return messagesList.stream().collect(Collectors.groupingBy(
-                m -> m.sentAt().atZone(ZoneOffset.UTC).toLocalDate(), Collectors.counting()));
-    }
-
-    public Optional<Long> mostActiveAuthor(long chatId) {
-        List<Message> messagesList = getMessagesByChatId(chatId);
-
-        Map<Long, Long> countByAuthor = messagesList.stream().collect(Collectors.groupingBy(Message::senderId, Collectors.counting()));
-
-        return countByAuthor.entrySet().stream().max(Map.Entry.comparingByValue()).map(Map.Entry::getKey);
-    }
-
-    public Set<String> allWords(long chatId) {
-        List<Message> messagesList = getMessagesByChatId(chatId);
-
-        List<Message> textMessages = messagesList.stream().filter(message -> message.content() instanceof Content.TextContent).toList();
-
-        return textMessages.stream()
-                .map(message ->  ((Content.TextContent) message.content()).text().split(" "))
-                .flatMap(Arrays::stream)
-                .collect(Collectors.toSet());
-    }
-
-    public Map<Long, Long> topChatsByActivity(int n) {
-        HashMap<Long, List<Message>> messagesList = getMessages();
-
-        Map<Long, Long> messagesCount = messagesList.values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.groupingBy(Message::chatId, Collectors.counting()));
-
-
-        return messagesCount.entrySet().stream().sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
-                .limit(n)
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (a, b) -> a,
-                        LinkedHashMap::new
-                ));
-    }
-
-    public long totalFileSize() {
-        HashMap<Long, List<Message>> messagesList = getMessages();
-
-        return messagesList.values().stream().flatMap(Collection::stream)
-                .filter(message -> message.content() instanceof Content.FileContent)
-                .mapToLong(message -> ((Content.FileContent) message.content()).sizeBytes())
-                .sum();
-    }
-
-    public Map<String, Long> countByContentType() {
-        HashMap<Long, List<Message>> messagesList = getMessages();
-
-         return messagesList.values().stream().flatMap(Collection::stream)
-                 .collect(Collectors.groupingBy(m -> switch (m.content()) {
-                     case Content.TextContent t -> "TextContent";
-                     case Content.ImageContent i -> "ImageContent";
-                     case Content.FileContent f -> "FileContent";
-                     case Content.VideoContent v -> "VideoContent";
-                 }, Collectors.counting()));
-    }
-
-    public Map<Boolean, List<Message>> splitByImage() {
-        HashMap<Long, List<Message>> messagesList = getMessages();
-
-        return messagesList.values().stream().flatMap(Collection::stream)
-                .collect(Collectors.partitioningBy(
-                        message -> message.content() instanceof Content.ImageContent));
-    }
-
-    public Map<Long, Message> lastMessagePerChat() {
-        HashMap<Long, List<Message>> messagesList = getMessages();
-
-        return messagesList.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry ->
-                                entry.getValue().stream().max(Comparator.comparing(Message::sentAt)).orElseThrow()
-                ));
-    }
-
-    Optional<Message> getLastMessageReduce(long chatId) {
-        List<Message> snapshot = getMessagesByChatId(chatId);
-
-        return snapshot.stream().reduce((a, b) -> a.sentAt().isAfter(b.sentAt()) ? a : b);
     }
 }

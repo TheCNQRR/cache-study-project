@@ -27,11 +27,9 @@ public class Chat {
     List<ChatMember> members = new ArrayList<>();
 
     public Chat() {}
-    public Chat(Long id, String title, User createdBy, LocalDateTime createdAt) {
-        this.id = id;
+    public Chat(String title, User createdBy) {
         this.title = title;
         this.createdBy = createdBy;
-        this.createdAt = createdAt;
     }
 
     public String getTitle() {
