@@ -1,7 +1,7 @@
 package by.java.enterprise.service;
 
 import by.java.enterprise.interfaces.MessageSorter;
-import by.java.enterprise.model.Message;
+import by.java.enterprise.record.Message;
 import org.springframework.stereotype.Component;
 
 @Component("byTimeAsc")

@@ -6,7 +6,7 @@ import by.java.enterprise.dto.response.UserResponse;
 import by.java.enterprise.dto.response.UsersResponse;
 import by.java.enterprise.exception.DuplicateUsernameException;
 import by.java.enterprise.exception.UserNotFoundException;
-import by.java.enterprise.model.User;
+import by.java.enterprise.record.User;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 

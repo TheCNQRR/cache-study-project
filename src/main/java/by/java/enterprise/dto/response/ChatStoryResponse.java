@@ -1,6 +1,6 @@
 package by.java.enterprise.dto.response;
 
-import by.java.enterprise.model.Message;
+import by.java.enterprise.record.Message;
 
 import java.util.List;
 

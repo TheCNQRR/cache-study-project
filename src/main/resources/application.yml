@@ -1,8 +1,17 @@
 spring:
   application:
-    name: chat-service
+    name: CacheApplication
   datasource:
-    url: jdbc:postgresql://localhost:5432/cache
+    url: jdbc:postgresql://localhost:5432/telegram_clone
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
 app:
   features:

@@ -9,7 +9,7 @@ import by.java.enterprise.dto.response.CreateChatResponse;
 import by.java.enterprise.dto.response.CreateMessageResponse;
 import by.java.enterprise.interfaces.Content;
 import by.java.enterprise.interfaces.MessageSorter;
-import by.java.enterprise.model.Message;
+import by.java.enterprise.record.Message;
 import by.java.enterprise.service.ChatService;
 import by.java.enterprise.service.MockSingletonService;
 import by.java.enterprise.service.UserService;

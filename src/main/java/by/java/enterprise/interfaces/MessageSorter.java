@@ -1,6 +1,6 @@
 package by.java.enterprise.interfaces;
 
-import by.java.enterprise.model.Message;
+import by.java.enterprise.record.Message;
 
 import java.util.Comparator;
 

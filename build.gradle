@@ -17,7 +17,10 @@ dependencies {
     implementation 'org.slf4j:jcl-over-slf4j:2.0.18'
     implementation 'com.fasterxml:classmate'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'
-    implementation 'org.springframework:spring-jdbc:7.0.8'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
