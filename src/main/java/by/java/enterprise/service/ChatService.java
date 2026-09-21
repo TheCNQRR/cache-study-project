@@ -1,7 +1,10 @@
 package by.java.enterprise.service;
 
 import by.java.enterprise.dto.request.CreateChatRequest;
+import by.java.enterprise.dto.request.UpdateChatRequest;
 import by.java.enterprise.dto.response.CreateChatResponse;
+import by.java.enterprise.dto.response.UpdateChatResponse;
+import by.java.enterprise.exception.ChatNotFoundException;
 import by.java.enterprise.exception.UserNotFoundException;
 import by.java.enterprise.model.Chat;
 import by.java.enterprise.model.User;
@@ -52,5 +55,29 @@ public class ChatService {
                 chat.getCreatedBy(),
                 chat.getCreatedAt()
         );
+    }
+
+    public UpdateChatResponse updateChat(long id, UpdateChatRequest request) {
+        Optional<Chat> foundChat = chatRepository.findById(id);
+
+        if (foundChat.isEmpty()) {
+            throw new ChatNotFoundException("Chat with id {" + id + "} not found" );
+        }
+
+        Chat chat = foundChat.get();
+
+        chat.setTitle(request.title());
+        chatRepository.save(chat);
+
+        return new UpdateChatResponse(
+                chat.getId(),
+                chat.getTitle(),
+                chat.getCreatedBy(),
+                chat.getCreatedAt()
+        );
+    }
+
+    public void deleteChatById(long id) {
+        chatRepository.deleteById(id);
     }
 }

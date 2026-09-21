@@ -1,9 +1,9 @@
 package by.java.enterprise.controller;
 
 import by.java.enterprise.dto.request.CreateUserRequest;
-import by.java.enterprise.dto.response.CreateUserResponse;
-import by.java.enterprise.dto.response.UserResponse;
-import by.java.enterprise.dto.response.UsersResponse;
+import by.java.enterprise.dto.request.UpdateUserFullRequest;
+import by.java.enterprise.dto.request.UpdateUserPartRequest;
+import by.java.enterprise.dto.response.*;
 import by.java.enterprise.model.User;
 import by.java.enterprise.service.UserService;
 import jakarta.validation.Valid;
@@ -49,5 +49,26 @@ public class UserController {
 
         return user.map(value -> ResponseEntity.status(HttpStatus.OK).body(value)).orElseGet(() ->
                 ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UpdateUserResponse> updateUserFull(@PathVariable long id, @Valid @RequestBody UpdateUserFullRequest request) {
+        UpdateUserResponse user = userService.updateUserFull(id, request);
+
+        return ResponseEntity.status(HttpStatus.OK).body(user);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<UpdateUserResponse> updateUserPart(@PathVariable long id, @Valid @RequestBody UpdateUserPartRequest request) {
+        UpdateUserResponse user = userService.updateUserPart(id, request);
+
+        return ResponseEntity.status(HttpStatus.OK).body(user);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUserById(@PathVariable long id) {
+        userService.deleteUserById(id);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 }

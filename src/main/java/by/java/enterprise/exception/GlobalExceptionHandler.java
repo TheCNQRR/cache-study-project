@@ -40,6 +40,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+    @ExceptionHandler(MessageNotFoundException.class)
+    public ResponseEntity<ApiError> handleMessageNotFound(ChatNotFoundException e, WebRequest request) {
+        ApiError error = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                "Ресурс не найден: " +  e.getMessage(),
+                Timestamp.from(Instant.now()),
+                request.getDescription(false).replace("uri=", "")
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
     @ExceptionHandler(DuplicateUsernameException.class)
     public ResponseEntity<ApiError> handleDuplicateUsername(DuplicateUsernameException e, WebRequest request) {
         ApiError error = new ApiError(

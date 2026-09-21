@@ -1,8 +1,10 @@
 package by.java.enterprise.service;
 
 import by.java.enterprise.dto.request.CreateUserRequest;
+import by.java.enterprise.dto.request.UpdateUserFullRequest;
 import by.java.enterprise.dto.response.CreateUserResponse;
-import by.java.enterprise.dto.response.UserResponse;
+import by.java.enterprise.dto.request.UpdateUserPartRequest;
+import by.java.enterprise.dto.response.UpdateUserResponse;
 import by.java.enterprise.exception.DuplicateUsernameException;
 import by.java.enterprise.exception.UserNotFoundException;
 import by.java.enterprise.model.User;
@@ -50,5 +52,55 @@ public final class UserService {
                 createdUser.getDisplayName(),
                 createdUser.getCreatedAt()
         );
+    }
+
+    public UpdateUserResponse updateUserFull(long id, UpdateUserFullRequest request) {
+        Optional<User> foundUser = userRepository.findById(id);
+
+        if (foundUser.isEmpty()) {
+            throw new UserNotFoundException("User with id {" + id + "} not exists");
+        }
+
+        User user = foundUser.get();
+
+        user.setUsername(request.username());
+        user.setDisplayName(request.displayName());
+        userRepository.save(user);
+
+        return new UpdateUserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getDisplayName(),
+                user.getCreatedAt()
+        );
+    }
+
+    public UpdateUserResponse updateUserPart(long id, UpdateUserPartRequest request) {
+        Optional<User> foundUser = userRepository.findById(id);
+
+        if (foundUser.isEmpty()) {
+            throw new UserNotFoundException("User with id {" + id + "} not exists");
+        }
+
+        User user = foundUser.get();
+
+        if (request.username() != null) {
+            user.setUsername(request.username());
+        }
+        if (request.displayName() != null) {
+            user.setDisplayName(request.displayName());
+        }
+        userRepository.save(user);
+
+        return new UpdateUserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getDisplayName(),
+                user.getCreatedAt()
+        );
+    }
+
+    public void deleteUserById(long id) {
+        userRepository.deleteById(id);
     }
 }

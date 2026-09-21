@@ -2,12 +2,15 @@ package by.java.enterprise.controller;
 
 import by.java.enterprise.dto.request.CreateChatRequest;
 import by.java.enterprise.dto.request.CreateMessageRequest;
+import by.java.enterprise.dto.request.UpdateChatRequest;
 import by.java.enterprise.dto.response.CreateChatResponse;
 import by.java.enterprise.dto.response.CreateMessageResponse;
+import by.java.enterprise.dto.response.UpdateChatResponse;
 import by.java.enterprise.model.Chat;
 import by.java.enterprise.model.Message;
 import by.java.enterprise.service.ChatService;
 import by.java.enterprise.service.MessageService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -61,5 +64,19 @@ public class ChatController {
         List<Message> messages = messageService.findAllMessages(chatId);
 
         return ResponseEntity.status(HttpStatus.OK).body(messages);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UpdateChatResponse> updateChat(@PathVariable long id, @Valid @RequestBody UpdateChatRequest request) {
+        UpdateChatResponse chat = chatService.updateChat(id, request);
+
+        return ResponseEntity.status(HttpStatus.OK).body(chat);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteChatById(@PathVariable long id) {
+        chatService.deleteChatById(id);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 }

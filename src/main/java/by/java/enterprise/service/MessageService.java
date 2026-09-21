@@ -1,8 +1,11 @@
 package by.java.enterprise.service;
 
 import by.java.enterprise.dto.request.CreateMessageRequest;
+import by.java.enterprise.dto.request.UpdateMessageRequest;
 import by.java.enterprise.dto.response.CreateMessageResponse;
+import by.java.enterprise.dto.response.UpdateMessageResponse;
 import by.java.enterprise.exception.ChatNotFoundException;
+import by.java.enterprise.exception.MessageNotFoundException;
 import by.java.enterprise.exception.UserNotFoundException;
 import by.java.enterprise.model.Chat;
 import by.java.enterprise.model.Message;
@@ -60,5 +63,29 @@ public class MessageService {
                 message.getText(),
                 message.getCreatedAt()
         );
+    }
+
+    public UpdateMessageResponse updateMessage(long id, UpdateMessageRequest request) {
+        Optional<Message> foundMessage = messageRepository.findById(id);
+
+        if (foundMessage.isEmpty()) {
+            throw new MessageNotFoundException("Message with id {" + id + "} not found" );
+        }
+
+        Message message = foundMessage.get();
+
+        message.setText(request.text());
+        messageRepository.save(message);
+
+        return new UpdateMessageResponse(
+                message.getId(),
+                message.getChat(),
+                message.getSender(),
+                message.getCreatedAt()
+        );
+    }
+
+    public void deleteMessageById(long id) {
+        messageRepository.deleteById(id);
     }
 }
