@@ -1,5 +1,6 @@
 package by.java.enterprise.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -19,16 +20,21 @@ public class User {
 
     String displayName;
 
+    @JsonIgnore
+    @Column(name = "password_hash", nullable = false)
+    String passwordHash;
+
     LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<ChatMember> memberships = new ArrayList<>();
 
     public User() {}
-    public User(Long id, String username, String displayName, LocalDateTime createdAt, ArrayList<Chat> chats) {
+    public User(Long id, String username, String displayName, String passwordHash, LocalDateTime createdAt, ArrayList<Chat> chats) {
         this.id = id;
         this.username = username;
         this.displayName = displayName;
+        this.passwordHash = passwordHash;
         this.createdAt = createdAt;
     }
 
@@ -62,5 +68,13 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 }

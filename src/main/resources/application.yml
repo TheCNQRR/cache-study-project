@@ -1,3 +1,8 @@
+security:
+  jwt:
+    secret: "my-telegram-clone-study-proj-secret-key"
+    expiration-ms: 3600000
+
 spring:
   application:
     name: CacheApplication

@@ -13,6 +13,8 @@ import by.java.enterprise.service.MessageService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,8 +55,12 @@ public class ChatController {
     }
 
     @PostMapping("/{chatId}/messages")
-    public ResponseEntity<CreateMessageResponse> sendMessage(@RequestBody CreateMessageRequest request) {
-        CreateMessageResponse message = messageService.createMessage(request);
+    public ResponseEntity<CreateMessageResponse> sendMessage(
+            @PathVariable long chatId,
+            @RequestBody CreateMessageRequest request,
+            @AuthenticationPrincipal UserDetails principal
+    ) {
+        CreateMessageResponse message = messageService.createMessage(chatId, request, principal.getUsername());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
@@ -77,6 +83,6 @@ public class ChatController {
     public ResponseEntity<?> deleteChatById(@PathVariable long id) {
         chatService.deleteChatById(id);
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

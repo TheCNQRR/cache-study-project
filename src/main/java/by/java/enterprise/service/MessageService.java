@@ -11,6 +11,7 @@ import by.java.enterprise.model.Chat;
 import by.java.enterprise.model.Message;
 import by.java.enterprise.model.User;
 import by.java.enterprise.repository.MessageRepository;
+import by.java.enterprise.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,12 +20,12 @@ import java.util.Optional;
 @Service
 public class MessageService {
 
-    private final UserService userService;
+    private final UserRepository userRepository;
     private final ChatService chatService;
     private final MessageRepository messageRepository;
 
-    public MessageService(UserService userService, ChatService chatService, MessageRepository messageRepository) {
-        this.userService = userService;
+    public MessageService(UserRepository userRepository, ChatService chatService, MessageRepository messageRepository) {
+        this.userRepository = userRepository;
         this.chatService = chatService;
         this.messageRepository = messageRepository;
     }
@@ -37,31 +38,31 @@ public class MessageService {
         return messageRepository.findById(messageId);
     }
 
-    public CreateMessageResponse createMessage(CreateMessageRequest request) {
-        Optional<Chat> foundChat = chatService.findChatById(request.chatId());
+    public CreateMessageResponse createMessage(long chatId, CreateMessageRequest request, String senderUsername) {
+        Optional<Chat> foundChat = chatService.findChatById(chatId);
         if (foundChat.isEmpty()) {
-            throw new ChatNotFoundException("Chat with id {" + request.chatId() + "} not found");
-        }
-
-        Optional<User> foundUser = userService.findUserById(request.senderId());
-        if (foundUser.isEmpty()) {
-            throw new UserNotFoundException("User with id {" + request.senderId() + "} not found");
+            throw new ChatNotFoundException("Chat with id {" + chatId + "} not found");
         }
 
         Chat chat = foundChat.get();
-        User sender = foundUser.get();
+
+        User sender = userRepository.findByUsername(senderUsername)
+                .orElseThrow(() -> new UserNotFoundException(
+                        "User with username {" + senderUsername + "} not found"));
 
         Message message = new Message();
         message.setChat(chat);
         message.setSender(sender);
         message.setText(request.text());
 
+        Message savedMessage = messageRepository.save(message);
+
         return new CreateMessageResponse(
-                message.getId(),
-                message.getChat(),
-                message.getSender(),
-                message.getText(),
-                message.getCreatedAt()
+                savedMessage.getId(),
+                savedMessage.getChat(),
+                savedMessage.getSender(),
+                savedMessage.getText(),
+                savedMessage.getCreatedAt()
         );
     }
 
