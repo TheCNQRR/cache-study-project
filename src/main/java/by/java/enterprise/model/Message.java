@@ -23,6 +23,7 @@ public class Message {
     @Column(nullable = false)
     String text;
 
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     LocalDateTime createdAt;
 
     public Message() {}

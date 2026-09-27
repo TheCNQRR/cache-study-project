@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>STOMP chat test</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+</head>
+<body>
+<button id="connectBtn" onclick="connect()">Connect</button>
+<input id="chatId" value="1" style="width:60px">
+<input id="senderId" value="1" style="width:60px">
+<input id="text" placeholder="текст" value="привет">
+<button id="sendBtn" onclick="send()" disabled>Send</button>
+<pre id="log" style="border:1px solid #ccc; padding:8px;"></pre>
+
+<script>
+    let client;
+    const log = m => {
+        const el = document.getElementById('log');
+        el.textContent += m + '\n';
+        el.scrollTop = el.scrollHeight;
+    };
+
+    function connect() {
+        if (client && client.active) {
+            log('Already connecting/connected');
+            return;
+        }
+
+        const chatId = document.getElementById('chatId').value;
+
+        client = new StompJs.Client({
+            webSocketFactory: () => new SockJS(window.location.origin + '/ws'),
+            debug: (m) => console.log('[STOMP]', m),
+            onConnect: () => {
+                log('Connected to /ws');
+                client.subscribe('/topic/chat/' + chatId, frame => {
+                    log('MESSAGE: ' + frame.body);
+                });
+                log('Subscribed to /topic/chat/' + chatId);
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('connectBtn').disabled = true;
+            },
+            onWebSocketClose: () => {
+                log('Disconnected');
+                document.getElementById('sendBtn').disabled = true;
+                document.getElementById('connectBtn').disabled = false;
+            },
+            onStompError: f => log('STOMP error: ' + f.headers['message'])
+        });
+        client.activate();
+    }
+
+    function send() {
+        if (!client || !client.connected) {
+            log('Not connected yet');
+            return;
+        }
+
+        const body = JSON.stringify({
+            chatId: Number(document.getElementById('chatId').value),
+            senderId: Number(document.getElementById('senderId').value),
+            text: document.getElementById('text').value
+        });
+
+        client.publish({ destination: '/app/chat/send', body });
+        log('SENT: ' + body);
+    }
+</script>
+</body>
+</html>
