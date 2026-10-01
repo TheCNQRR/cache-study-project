@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+
 @Service
 public class AuthService {
 
@@ -37,6 +39,7 @@ public class AuthService {
         user.setUsername(request.username());
         user.setDisplayName(request.displayName());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setCreatedAt(LocalDateTime.now());
 
         User saved = userRepository.save(user);
 

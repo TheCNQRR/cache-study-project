@@ -11,7 +11,6 @@ import by.java.enterprise.repository.MessageRepository;
 import by.java.enterprise.repository.UserRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ChatRealtimeService {
@@ -20,15 +19,19 @@ public class ChatRealtimeService {
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ChatCacheService chatCacheService;
 
     public ChatRealtimeService(ChatRepository chatRepository,
                                UserRepository userRepository,
                                MessageRepository messageRepository,
-                               SimpMessagingTemplate messagingTemplate) {
+                               SimpMessagingTemplate messagingTemplate,
+                               ChatCacheService chatCacheService
+    ) {
         this.chatRepository = chatRepository;
         this.userRepository = userRepository;
         this.messageRepository = messageRepository;
         this.messagingTemplate = messagingTemplate;
+        this.chatCacheService = chatCacheService;
     }
 
     public Message saveAndGet(SendMessage msg) {
@@ -47,7 +50,7 @@ public class ChatRealtimeService {
     }
 
     public void broadcastToChat(Message msg) {
-        String destination = "/topic/chat/" + msg.getChat().getId();
-        messagingTemplate.convertAndSend(destination, msg);
+        chatCacheService.pushMessage(msg.getChat().getId(), msg);
+        messagingTemplate.convertAndSend("/topic/chat/" + msg.getChat().getId(), msg);
     }
 }

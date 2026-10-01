@@ -44,11 +44,10 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable long id) {
-        Optional<User> user = userService.findUserById(id);
+    public ResponseEntity<UserResponse> getUser(@PathVariable long id) {
+        UserResponse user = userService.findUserById(id);
 
-        return user.map(value -> ResponseEntity.status(HttpStatus.OK).body(value)).orElseGet(() ->
-                ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        return ResponseEntity.status(HttpStatus.OK).body(user);
     }
 
     @PutMapping("/{id}")

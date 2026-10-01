@@ -4,11 +4,13 @@ import by.java.enterprise.dto.request.CreateChatRequest;
 import by.java.enterprise.dto.request.UpdateChatRequest;
 import by.java.enterprise.dto.response.CreateChatResponse;
 import by.java.enterprise.dto.response.UpdateChatResponse;
+import by.java.enterprise.dto.response.UserResponse;
 import by.java.enterprise.exception.ChatNotFoundException;
 import by.java.enterprise.exception.UserNotFoundException;
 import by.java.enterprise.model.Chat;
 import by.java.enterprise.model.User;
 import by.java.enterprise.repository.ChatRepository;
+import by.java.enterprise.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,11 +19,11 @@ import java.util.Optional;
 @Service
 public class ChatService {
 
-    private final UserService userService;
+    private final UserRepository userRepository;
     private final ChatRepository chatRepository;
 
-    public ChatService(UserService userService, ChatRepository chatRepository) {
-        this.userService = userService;
+    public ChatService(UserRepository userRepository, ChatRepository chatRepository) {
+        this.userRepository = userRepository;
         this.chatRepository = chatRepository;
     }
 
@@ -34,10 +36,10 @@ public class ChatService {
     }
 
     public CreateChatResponse createChat(CreateChatRequest request) {
-        Optional<User> foundUser = userService.findUserById(request.createdBy());
+        Optional<User> foundUser = userRepository.findById(request.createdBy());
 
         if (foundUser.isEmpty()) {
-            throw new UserNotFoundException("user with id {" + request.createdBy() + "} not found");
+            throw new UserNotFoundException("User with id {" + request.createdBy() + "} not found");
         }
 
         User user = foundUser.get();

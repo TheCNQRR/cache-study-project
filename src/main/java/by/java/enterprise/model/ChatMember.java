@@ -1,5 +1,6 @@
 package by.java.enterprise.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -12,11 +13,13 @@ public class ChatMember {
     @ManyToOne
     @MapsId("chatId")
     @JoinColumn(name = "chat_id")
+    @JsonIgnore
     Chat chat;
 
     @ManyToOne
     @MapsId("userId")
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     User user;
 
     public ChatMember() {}

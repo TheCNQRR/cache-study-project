@@ -26,6 +26,7 @@ public class User {
 
     LocalDateTime createdAt;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<ChatMember> memberships = new ArrayList<>();
 

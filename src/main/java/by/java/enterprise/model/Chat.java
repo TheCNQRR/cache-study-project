@@ -1,5 +1,6 @@
 package by.java.enterprise.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,11 @@ public class Chat {
 
     LocalDateTime createdAt;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Message> messages = new ArrayList<>();
+
+    @JsonIgnore
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
     List<ChatMember> members = new ArrayList<>();
 
