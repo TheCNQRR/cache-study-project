@@ -21,6 +21,22 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-group
+      consumer:
+        auto-offset-reset: earliest
+        key-deserializer: StringDeserializer
+        value-deserializer: JsonDeserializer
+        properties:
+          spring:
+            json:
+              trusted:
+                packages: "by/java/enterprise/*"
+      producer:
+        key-serializer: StringSerializer
+        value-serializer: JsonSerializer
 
 app:
   features:

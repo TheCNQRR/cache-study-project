@@ -6,6 +6,7 @@ import by.java.enterprise.dto.response.AuthResponse;
 import by.java.enterprise.dto.response.UserResponse;
 import by.java.enterprise.exception.DuplicateUsernameException;
 import by.java.enterprise.exception.InvalidCredentialsException;
+import by.java.enterprise.kafka.producer.UserEventProducer;
 import by.java.enterprise.model.User;
 import by.java.enterprise.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -21,13 +22,17 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final UserEventProducer userEventProducer;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtService jwtService) {
+                       JwtService jwtService,
+                       UserEventProducer userEventProducer
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.userEventProducer = userEventProducer;
     }
 
     public UserResponse register(RegisterRequest request) {
@@ -42,6 +47,7 @@ public class AuthService {
         user.setCreatedAt(LocalDateTime.now());
 
         User saved = userRepository.save(user);
+        userEventProducer.userRegistered(saved);
 
         return new UserResponse(saved.getId(), saved.getUsername(), saved.getDisplayName(), saved.getCreatedAt());
     }
