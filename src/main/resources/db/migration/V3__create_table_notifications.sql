@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS notifications(
+    event_id VARCHAR(255) NOT NULL UNIQUE
+)
