@@ -41,15 +41,17 @@ public class AuthService {
         }
 
         User user = new User();
+        user.setEmail(request.email());
         user.setUsername(request.username());
         user.setDisplayName(request.displayName());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setEmailVerified(false);
         user.setCreatedAt(LocalDateTime.now());
 
         User saved = userRepository.save(user);
         userEventProducer.userRegistered(saved);
 
-        return new UserResponse(saved.getId(), saved.getUsername(), saved.getDisplayName(), saved.getCreatedAt());
+        return new UserResponse(saved.getId(), saved.getEmail(), saved.getUsername(), saved.getDisplayName(), saved.getCreatedAt());
     }
 
     public AuthResponse login(LoginRequest request) {

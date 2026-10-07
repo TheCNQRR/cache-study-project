@@ -24,6 +24,7 @@ public class UserEventProducer {
                 String.valueOf(user.getId()),
                 new UserRegisteredEvent(
                         user.getId(),
+                        user.getEmail(),
                         user.getUsername()
                 )
         );

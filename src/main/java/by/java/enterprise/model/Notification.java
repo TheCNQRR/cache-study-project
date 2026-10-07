@@ -10,7 +10,6 @@ public class Notification {
     @Id
     Long eventId;
 
-
     public Long getEventId() {
         return eventId;
     }

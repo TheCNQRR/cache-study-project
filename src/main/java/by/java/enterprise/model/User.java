@@ -16,6 +16,9 @@ public class User {
     Long id;
 
     @Column(nullable = false, unique = true)
+    String email;
+
+    @Column(nullable = false, unique = true)
     String username;
 
     String displayName;
@@ -24,6 +27,8 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     String passwordHash;
 
+    Boolean emailVerified;
+
     LocalDateTime createdAt;
 
     @JsonIgnore
@@ -31,11 +36,22 @@ public class User {
     List<ChatMember> memberships = new ArrayList<>();
 
     public User() {}
-    public User(Long id, String username, String displayName, String passwordHash, LocalDateTime createdAt, ArrayList<Chat> chats) {
+    public User(
+            Long id,
+            String email,
+            String username,
+            String displayName,
+            String passwordHash,
+            Boolean emailVerified,
+            LocalDateTime createdAt,
+            ArrayList<Chat> chats
+    ) {
         this.id = id;
+        this.email = email;
         this.username = username;
         this.displayName = displayName;
         this.passwordHash = passwordHash;
+        this.emailVerified = emailVerified;
         this.createdAt = createdAt;
     }
 
@@ -45,6 +61,14 @@ public class User {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getUsername() {
@@ -61,6 +85,14 @@ public class User {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public Boolean getEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 
     public LocalDateTime getCreatedAt() {
