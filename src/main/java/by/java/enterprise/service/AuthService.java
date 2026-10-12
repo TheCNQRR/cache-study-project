@@ -63,7 +63,13 @@ public class AuthService {
         }
 
         String token = jwtService.createToken(foundUser);
-        UserResponse response = new UserResponse(foundUser.getId(), foundUser.getUsername(), foundUser.getDisplayName(), foundUser.getCreatedAt());
+        UserResponse response = new UserResponse(
+                foundUser.getId(),
+                foundUser.getEmail(),
+                foundUser.getUsername(),
+                foundUser.getDisplayName(),
+                foundUser.getCreatedAt()
+        );
 
         return new AuthResponse(token, response);
     }

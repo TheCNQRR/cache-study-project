@@ -23,7 +23,7 @@ public class EmailService {
                 Ваш код подтверждения: %d
 
                 Подтвердите адрес, перейдя по ссылке:
-                http://localhost:8080/auth/confirm-email?email=%s&code=%d
+                http://localhost:8080/api/v1/auth/confirm-email?email=%s&code=%d
 
                 Код действует 15 минут.
                 """.formatted(username, code, toEmail, code));

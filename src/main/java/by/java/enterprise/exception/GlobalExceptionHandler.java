@@ -128,4 +128,18 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
+    @ExceptionHandler({EmailNotFoundException.class,
+            CodeNotFoundException.class,
+            InvalidCodeException.class,
+            CodeExpiredException.class})
+    public ResponseEntity<ApiError> handleConfirmEmail(RuntimeException e, WebRequest request) {
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                e.getMessage(),
+                Timestamp.from(Instant.now()),
+                request.getDescription(false).replace("uri=", "")
+        );
+        return ResponseEntity.badRequest().body(error);
+    }
 }

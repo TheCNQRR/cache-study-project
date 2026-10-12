@@ -39,6 +39,7 @@ public class UserService {
         return userRepository.findById(id).map(u ->
                 new UserResponse(
                        u.getId(),
+                       u.getEmail(),
                        u.getUsername(),
                        u.getDisplayName(),
                        u.getCreatedAt()
