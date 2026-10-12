@@ -15,7 +15,7 @@ public class EmailService {
 
     public void sendConfirmationCode(String toEmail, String username, int code) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
+        message.setTo("ap166884@gmail.com");
         message.setSubject("Код подтверждения");
         message.setText("""
                 Здравствуйте, %s!
@@ -27,6 +27,7 @@ public class EmailService {
 
                 Код действует 15 минут.
                 """.formatted(username, code, toEmail, code));
+
         mailSender.send(message);
     }
 }
