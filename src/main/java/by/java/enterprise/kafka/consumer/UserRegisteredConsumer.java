@@ -1,10 +1,10 @@
 package by.java.enterprise.kafka.consumer;
 
-import by.java.enterprise.exception.DuplicateNotificationException;
 import by.java.enterprise.kafka.model.UserRegisteredEvent;
-import by.java.enterprise.model.Notification;
-import by.java.enterprise.service.EmailService;
-import by.java.enterprise.service.NotificationService;
+import by.java.enterprise.notification.ChannelType;
+import by.java.enterprise.notification.NotificationMessage;
+import by.java.enterprise.notification.NotificationSender;
+import by.java.enterprise.notification.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -22,12 +22,15 @@ public class UserRegisteredConsumer {
     private final Logger logger = LoggerFactory.getLogger(UserRegisteredConsumer.class);
 
     private final NotificationService notificationService;
-    private final EmailService emailService;
+    private final NotificationSender sender;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public UserRegisteredConsumer(NotificationService notificationService, EmailService emailService) {
+    public UserRegisteredConsumer(
+            NotificationService notificationService,
+            NotificationSender sender
+    ) {
         this.notificationService = notificationService;
-        this.emailService = emailService;
+        this.sender = sender;
     }
 
     @KafkaListener(topics = "user.registered", groupId = "notification-group")
@@ -39,15 +42,33 @@ public class UserRegisteredConsumer {
 
         try {
             notificationService.saveCodeAndNotification(event.userId(), codeHash);
-        } catch (DuplicateNotificationException e) {
-            logger.warn("Duplicate event, skipping. eventId={}", event.userId());
+        } catch (Exception e) {
+            logger.warn("Duplicate event, skipping DB writes. userId={}", event.userId());
         }
 
         try {
-            emailService.sendConfirmationCode(event.email(), event.username(), code);
-            logger.info("Email sent to {}", event.email());
+            String body = """
+                    Здравствуйте, %s!
+
+                    Ваш код подтверждения: %d
+
+                    Подтвердите адрес, перейдя по ссылке:
+                    http://localhost:8080/auth/confirm-email?email=%s&code=%d
+
+                    Код действует 15 минут.
+                    """.formatted(event.username(), code, event.email(), code);
+
+            NotificationMessage message = new NotificationMessage(
+                    event.email(),
+                    "Код подтверждения",
+                    body
+            );
+
+            sender.send(ChannelType.EMAIL, message);
+            logger.info("Sent via EMAIL to {}", event.email());
         } catch (Exception e) {
-            logger.error("failed to send email to {}", event.email(), e);
+            logger.error("Failed to send email to {}", event.email(), e);
+            throw e;
         }
     }
 

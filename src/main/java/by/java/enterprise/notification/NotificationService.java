@@ -1,4 +1,4 @@
-package by.java.enterprise.service;
+package by.java.enterprise.notification;
 
 import by.java.enterprise.model.EmailCode;
 import by.java.enterprise.model.Notification;

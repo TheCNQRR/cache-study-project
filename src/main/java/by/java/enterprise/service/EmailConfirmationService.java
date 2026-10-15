@@ -6,6 +6,9 @@ import by.java.enterprise.exception.EmailNotFoundException;
 import by.java.enterprise.exception.InvalidCodeException;
 import by.java.enterprise.model.EmailCode;
 import by.java.enterprise.model.User;
+import by.java.enterprise.notification.ChannelType;
+import by.java.enterprise.notification.NotificationMessage;
+import by.java.enterprise.notification.NotificationSender;
 import by.java.enterprise.repository.EmailCodeRepository;
 import by.java.enterprise.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -23,17 +26,17 @@ public class EmailConfirmationService {
 
     private final UserRepository userRepository;
     private final EmailCodeRepository emailCodeRepository;
+    private final NotificationSender notificationSender;
     private final SecureRandom secureRandom = new SecureRandom();
-    private final EmailService emailService;
 
     public EmailConfirmationService(
             UserRepository userRepository,
             EmailCodeRepository emailCodeRepository,
-            EmailService emailService
+            NotificationSender notificationSender
     ) {
         this.userRepository = userRepository;
         this.emailCodeRepository = emailCodeRepository;
-        this.emailService = emailService;
+        this.notificationSender = notificationSender;
     }
 
     @Transactional
@@ -77,7 +80,19 @@ public class EmailConfirmationService {
         newCode.setConfirmed(false);
         emailCodeRepository.save(newCode);
 
-        emailService.sendConfirmationCode(email, user.getUsername(), code);
+        String body = """
+            Здравствуйте, %s!
+
+            Ваш новый код подтверждения: %d
+
+            Подтвердите адрес, перейдя по ссылке:
+            http://localhost:8080/auth/confirm-email?email=%s&code=%d
+
+            Код действует 15 минут.
+            """.formatted(user.getUsername(), code, email, code);
+
+        notificationSender.send(ChannelType.EMAIL,
+                new NotificationMessage(email, "Код подтверждения", body));
     }
 
     private String sha256(String input) {
