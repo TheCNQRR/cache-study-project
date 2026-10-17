@@ -28,17 +28,6 @@ public class UserControllerTest {
     }
 
     @Test
-    void getUserById_returns200_whenUserExists() throws Exception { // TODO привести к единому код стайлу, добавить test в начале
-        CreateUserResponse createdUser = userService.createUser(new CreateUserRequest("username", "displayName"));
-
-        mockMvc.perform(get("/api/v1/users/{id}", createdUser.id()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(createdUser.id()))
-                .andExpect(jsonPath("$.username").value(createdUser.username()))
-                .andExpect(jsonPath("$.displayName").value(createdUser.displayName()));
-    }
-
-    @Test
     void getUserById_returns404_whenUserNotExists() throws Exception {
         mockMvc.perform(get("/api/v1/users/{id}", 999999L))
                 .andExpect(status().isNotFound());

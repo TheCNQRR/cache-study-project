@@ -5,6 +5,7 @@
     <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V4__change_notification_id_type.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V5__add_column_email_to_user.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V6__create_table_email_code.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V7__add_column_status_to_message.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/src/main/resources/schema.sql" dialect="PostgreSQL" />
   </component>
 </project>

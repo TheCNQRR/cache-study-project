@@ -1,5 +1,7 @@
 package by.java.enterprise.model;
 
+import by.java.enterprise.message.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
@@ -28,11 +30,47 @@ public class Message {
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     LocalDateTime createdAt;
 
-    public Message() {}
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private MessageStatus status = MessageStatus.SENT;
+
+    @Transient
+    @JsonIgnore
+    private MessageState state;
+
+    public Message() {
+        this.state = new SentState();
+    }
     public Message(Chat chat, User sender, String text, LocalDateTime createdAt) {
         this.chat = chat;
         this.sender = sender;
         this.text = text;
+    }
+
+    @PostLoad
+    void restoreState() {
+        this.state = switch (status) {
+            case SENT -> new SentState();
+            case DELIVERED -> new DeliveredState();
+            case READ -> new ReadState();
+        };
+    }
+
+    public void deliver() {
+        state.deliver(this);
+    }
+
+    public void read() {
+        state.read(this);
+    }
+
+    public MessageState getState() {
+        return state;
+    }
+
+    public void setState(MessageState newState) {
+        this.state = newState;
+        this.status = newState.status();
     }
 
     public Long getId() {
