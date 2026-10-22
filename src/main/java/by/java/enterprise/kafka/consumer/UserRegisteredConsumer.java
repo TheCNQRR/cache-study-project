@@ -53,13 +53,13 @@ public class UserRegisteredConsumer {
                     Ваш код подтверждения: %d
 
                     Подтвердите адрес, перейдя по ссылке:
-                    http://localhost:8080/auth/confirm-email?email=%s&code=%d
+                    http://localhost:8080/api/v1/auth/confirm-email?email=%s&code=%d
 
                     Код действует 15 минут.
                     """.formatted(event.username(), code, event.email(), code);
 
             NotificationMessage message = new NotificationMessage(
-                    event.email(),
+                    "ap166884@gmail.com",
                     "Код подтверждения",
                     body
             );

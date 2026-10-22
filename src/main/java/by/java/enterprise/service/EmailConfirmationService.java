@@ -11,6 +11,9 @@ import by.java.enterprise.notification.NotificationMessage;
 import by.java.enterprise.notification.NotificationSender;
 import by.java.enterprise.repository.EmailCodeRepository;
 import by.java.enterprise.repository.UserRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,36 +32,65 @@ public class EmailConfirmationService {
     private final NotificationSender notificationSender;
     private final SecureRandom secureRandom = new SecureRandom();
 
+    private final Counter okCounter;
+    private final Counter failCounter;
+    private final Timer confirmTimer;
+
     public EmailConfirmationService(
             UserRepository userRepository,
             EmailCodeRepository emailCodeRepository,
-            NotificationSender notificationSender
+            NotificationSender notificationSender,
+            MeterRegistry meterRegistry
     ) {
         this.userRepository = userRepository;
         this.emailCodeRepository = emailCodeRepository;
         this.notificationSender = notificationSender;
+
+        this.okCounter = Counter.builder("confirm.ok")
+                .description("Успешные подтверждения почты")
+                .register(meterRegistry);
+
+        this.failCounter = Counter.builder("confirm.fail")
+                .description("Неудачные попытки подтверждения")
+                .register(meterRegistry);
+
+        this.confirmTimer = Timer.builder("confirm.time")
+                .description("Время выполнения подтверждения")
+                .publishPercentiles(0.5, 0.95, 0.99)
+                .register(meterRegistry);
     }
 
     @Transactional
     public void confirm(String email, String rawCode) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EmailNotFoundException("Пользователь не найден"));
+        Timer.Sample sample = Timer.start();
 
-        EmailCode code = emailCodeRepository
-                .findTopByUserIdAndConfirmedFalseOrderByExpiresAtDesc(user.getId())
-                .orElseThrow(() -> new CodeNotFoundException("Код не найден"));
+        try {
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new EmailNotFoundException("Пользователь не найден"));
 
-        String submittedHash = sha256(rawCode);
-        if (!submittedHash.equals(code.getCodeHash())) {
-            throw new InvalidCodeException("Неверный код");
+            EmailCode code = emailCodeRepository
+                    .findTopByUserIdAndConfirmedFalseOrderByExpiresAtDesc(user.getId())
+                    .orElseThrow(() -> new CodeNotFoundException("Код не найден"));
+
+            String submittedHash = sha256(rawCode);
+            if (!submittedHash.equals(code.getCodeHash())) {
+                throw new InvalidCodeException("Неверный код");
+            }
+
+            if (LocalDateTime.now().isAfter(code.getExpiresAt())) {
+                throw new CodeExpiredException("Код истёк, запросите новый");
+            }
+
+            user.setEmailVerified(true);
+            code.setConfirmed(true);
+
+            okCounter.increment();
+        } catch (Exception e) {
+            failCounter.increment();
+            throw e;
+        } finally {
+            sample.stop(confirmTimer);
         }
-
-        if (LocalDateTime.now().isAfter(code.getExpiresAt())) {
-            throw new CodeExpiredException("Код истёк, запросите новый");
-        }
-
-        user.setEmailVerified(true);
-        code.setConfirmed(true);
     }
 
     @Transactional
@@ -86,7 +118,7 @@ public class EmailConfirmationService {
             Ваш новый код подтверждения: %d
 
             Подтвердите адрес, перейдя по ссылке:
-            http://localhost:8080/auth/confirm-email?email=%s&code=%d
+            http://localhost:8080/api/v1/auth/confirm-email?email=%s&code=%d
 
             Код действует 15 минут.
             """.formatted(user.getUsername(), code, email, code);

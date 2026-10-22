@@ -64,6 +64,15 @@ springdoc:
     tags-sorter: alpha
     display-request-duration: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always
+
 ---
 spring:
   config:
@@ -75,6 +84,11 @@ springdoc:
     enabled: false
   api-docs:
     enabled: false
+
+management:
+  endpoint:
+    health:
+      show-details: never
 
 ---
 spring:
