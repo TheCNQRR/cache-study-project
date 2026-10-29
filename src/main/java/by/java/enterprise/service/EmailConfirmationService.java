@@ -1,5 +1,6 @@
 package by.java.enterprise.service;
 
+import by.java.enterprise.event.UserConfirmedEvent;
 import by.java.enterprise.exception.CodeExpiredException;
 import by.java.enterprise.exception.CodeNotFoundException;
 import by.java.enterprise.exception.EmailNotFoundException;
@@ -14,6 +15,7 @@ import by.java.enterprise.repository.UserRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class EmailConfirmationService {
     private final EmailCodeRepository emailCodeRepository;
     private final NotificationSender notificationSender;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final ApplicationEventPublisher publisher;
 
     private final Counter okCounter;
     private final Counter failCounter;
@@ -40,11 +43,13 @@ public class EmailConfirmationService {
             UserRepository userRepository,
             EmailCodeRepository emailCodeRepository,
             NotificationSender notificationSender,
+            ApplicationEventPublisher publisher,
             MeterRegistry meterRegistry
     ) {
         this.userRepository = userRepository;
         this.emailCodeRepository = emailCodeRepository;
         this.notificationSender = notificationSender;
+        this.publisher = publisher;
 
         this.okCounter = Counter.builder("confirm.ok")
                 .description("Успешные подтверждения почты")
@@ -83,6 +88,8 @@ public class EmailConfirmationService {
 
             user.setEmailVerified(true);
             code.setConfirmed(true);
+
+            publisher.publishEvent(new UserConfirmedEvent(user.getId()));
 
             okCounter.increment();
         } catch (Exception e) {
