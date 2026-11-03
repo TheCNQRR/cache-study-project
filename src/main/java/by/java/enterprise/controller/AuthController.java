@@ -1,5 +1,6 @@
 package by.java.enterprise.controller;
 
+import by.java.enterprise.core.port.in.ConfirmUserUseCase;
 import by.java.enterprise.dto.request.ConfirmEmailRequest;
 import by.java.enterprise.dto.request.LoginRequest;
 import by.java.enterprise.dto.request.RegisterRequest;
@@ -22,17 +23,22 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final ConfirmUserUseCase confirmUserUseCase;
     private final EmailConfirmationService emailConfirmationService;
 
-    public AuthController(AuthService authService, EmailConfirmationService emailConfirmationService) {
+    public AuthController(
+            AuthService authService,
+            ConfirmUserUseCase confirmUserUseCase,
+            EmailConfirmationService emailConfirmationService
+    ) {
         this.authService = authService;
+        this.confirmUserUseCase = confirmUserUseCase;
         this.emailConfirmationService = emailConfirmationService;
     }
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
         UserResponse user = authService.register(request);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
@@ -43,7 +49,7 @@ public class AuthController {
 
     @PostMapping("/confirm-email")
     public ResponseEntity<Void> confirmEmailPost(@Valid @RequestBody ConfirmEmailRequest request) {
-        emailConfirmationService.confirm(request.email(), request.code());
+        confirmUserUseCase.confirm(request.email(), request.code());
         return ResponseEntity.ok().build();
     }
 
@@ -53,7 +59,7 @@ public class AuthController {
             @RequestParam String code
     ) {
         try {
-            emailConfirmationService.confirm(email, code);
+            confirmUserUseCase.confirm(email, code);
             return ResponseEntity.ok("Почта " + email + " подтверждена");
         } catch (EmailNotFoundException | CodeNotFoundException
                  | InvalidCodeException | CodeExpiredException e) {
