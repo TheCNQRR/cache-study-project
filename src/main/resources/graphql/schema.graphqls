@@ -1,0 +1,16 @@
+type Query {
+    chats: [Chat!]!
+    chat(id: ID!): Chat
+}
+
+type Chat {
+    id: ID!
+    title: String!
+    messages: [Message!]!
+}
+
+type Message {
+    id: ID!
+    chatId: ID!
+    text: String!
+}

@@ -15,7 +15,9 @@ import by.java.enterprise.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class MessageService {
@@ -88,5 +90,12 @@ public class MessageService {
 
     public void deleteMessageById(long id) {
         messageRepository.deleteById(id);
+    }
+
+    public Map<Long, List<Message>> groupByChat(List<Long> chatIds) {
+        List<Message> allMessages = messageRepository.findByChatIdIn(chatIds);
+
+        return allMessages.stream()
+                .collect(Collectors.groupingBy(m -> m.getChat().getId()));
     }
 }
