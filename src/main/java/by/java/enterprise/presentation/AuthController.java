@@ -1,4 +1,4 @@
-package by.java.enterprise.controller;
+package by.java.enterprise.presentation;
 
 import by.java.enterprise.core.port.in.ConfirmUserUseCase;
 import by.java.enterprise.dto.request.ConfirmEmailRequest;

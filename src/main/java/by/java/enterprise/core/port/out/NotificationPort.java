@@ -1,5 +1,7 @@
 package by.java.enterprise.core.port.out;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface NotificationPort {
-    void sendConfirmationSuccess(String email);
+    CompletableFuture<Void> sendConfirmationSuccess(String email);
 }
