@@ -22,6 +22,6 @@ public class NotificationSender {
         if (channel == null) {
             throw new IllegalArgumentException("No channel registered for type " + type);
         }
-        channel.send(message);
+        channel.send(message).join();
     }
 }

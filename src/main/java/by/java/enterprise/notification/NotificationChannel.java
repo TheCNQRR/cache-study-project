@@ -1,6 +1,8 @@
 package by.java.enterprise.notification;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface NotificationChannel {
     ChannelType type();
-    void send(NotificationMessage message);
+    CompletableFuture<Void> send(NotificationMessage message);
 }
