@@ -20,17 +20,23 @@ class OptimisticLockingTest {
         User user = new User();
         user.setUsername("testuser");
         user.setEmail("test@test.com");
-        user.setPasswordHash("testpass");
+        user.setPasswordHash("dummy_hash");
         entityManager.persist(user);
         entityManager.flush();
 
+        entityManager.clear();
+
         User user1 = entityManager.find(User.class, user.getId());
+        entityManager.clear(); // Снова чистим кэш
+
         User user2 = entityManager.find(User.class, user.getId());
 
         user1.setDisplayName("New Name 1");
+        entityManager.merge(user1);
         entityManager.flush();
 
         user2.setDisplayName("New Name 2");
+        entityManager.merge(user2);
 
         assertThrows(ObjectOptimisticLockingFailureException.class, () -> {
             entityManager.flush();
