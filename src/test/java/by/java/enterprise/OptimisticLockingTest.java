@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class OptimisticLockingTest {
 
     @Autowired
-    private EntityManager entityManager;
+    private EntityManager em;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -26,20 +26,20 @@ class OptimisticLockingTest {
         user.setUsername("testuser");
         user.setEmail("test@test.com");
         user.setPasswordHash("dummy_hash");
-        entityManager.persist(user);
-        entityManager.flush();
-        entityManager.clear();
+        em.persist(user);
+        em.flush();
+        em.clear();
 
-        User detachedUser = entityManager.find(User.class, user.getId());
-        entityManager.clear(); // Отвязываем от контекста
+        User detachedUser = em.find(User.class, user.getId());
+        em.clear();
 
         jdbcTemplate.update("UPDATE users SET version = version + 1 WHERE id = ?", user.getId());
 
         detachedUser.setDisplayName("New Name");
-        entityManager.merge(detachedUser);
 
         assertThrows(OptimisticLockException.class, () -> {
-            entityManager.flush();
+            em.merge(detachedUser);
+            em.flush();
         });
     }
 }
