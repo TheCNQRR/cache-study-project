@@ -20,6 +20,7 @@ class OptimisticLockingTest {
         User user = new User();
         user.setUsername("testuser");
         user.setEmail("test@test.com");
+        user.setPasswordHash("testpass");
         entityManager.persist(user);
         entityManager.flush();
 
