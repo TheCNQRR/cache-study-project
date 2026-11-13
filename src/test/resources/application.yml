@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -16,3 +16,27 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
   flyway:
     enabled: false
+  kafka:
+    bootstrap-servers: localhost:9999
+    consumer:
+      group-id: test-group
+  data:
+    redis:
+      host: localhost
+      port: 9999
+  mail:
+    host: localhost
+    port: 1025
+    username: test
+    password: test
+
+security:
+  jwt:
+    secret: "super-secret-test-key-that-is-at-least-32-bytes-long"
+    expiration-ms: 3600000
+
+app:
+  features:
+    search-enabled: true
+chat:
+  default-page-limit: 10

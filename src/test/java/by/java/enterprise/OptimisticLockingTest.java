@@ -21,7 +21,7 @@ class OptimisticLockingTest {
         User user = new User();
         user.setUsername("testuser");
         user.setEmail("test@test.com");
-        user.setPasswordHash("testpass");
+        user.setPasswordHash("dummy_hash");
         entityManager.persist(user);
         entityManager.flush();
 
@@ -37,9 +37,9 @@ class OptimisticLockingTest {
         entityManager.flush();
 
         user2.setDisplayName("New Name 2");
-        entityManager.merge(user2);
 
         assertThrows(OptimisticLockException.class, () -> {
+            entityManager.merge(user2);
             entityManager.flush();
         });
     }
