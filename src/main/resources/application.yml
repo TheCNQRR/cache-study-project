@@ -32,6 +32,9 @@ spring:
           auth: ${MAIL_SMTP_AUTH:false}
           starttls:
             enable: ${MAIL_STARTTLS:false}
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.graphql.autoconfigure.data.GraphQlQueryByExampleAutoConfiguration
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
