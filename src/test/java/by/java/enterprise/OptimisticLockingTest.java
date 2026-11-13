@@ -6,6 +6,7 @@ import jakarta.persistence.OptimisticLockException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -16,6 +17,9 @@ class OptimisticLockingTest {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Test
     void testOptimisticLockingException() {
         User user = new User();
@@ -24,22 +28,17 @@ class OptimisticLockingTest {
         user.setPasswordHash("dummy_hash");
         entityManager.persist(user);
         entityManager.flush();
-
         entityManager.clear();
 
-        User user1 = entityManager.find(User.class, user.getId());
-        entityManager.clear();
+        User detachedUser = entityManager.find(User.class, user.getId());
+        entityManager.clear(); // Отвязываем от контекста
 
-        User user2 = entityManager.find(User.class, user.getId());
+        jdbcTemplate.update("UPDATE users SET version = version + 1 WHERE id = ?", user.getId());
 
-        user1.setDisplayName("New Name 1");
-        entityManager.merge(user1);
-        entityManager.flush();
-
-        user2.setDisplayName("New Name 2");
+        detachedUser.setDisplayName("New Name");
+        entityManager.merge(detachedUser);
 
         assertThrows(OptimisticLockException.class, () -> {
-            entityManager.merge(user2);
             entityManager.flush();
         });
     }
