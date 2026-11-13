@@ -114,4 +114,9 @@ public class EmailConfirmationServiceTest {
         assertThrows(CodeNotFoundException.class,
                 () -> service.confirm("test@example.com", "123456"));
     }
+
+    @Test
+    void throwTest() {
+        throw new IllegalArgumentException();
+    }
 }
