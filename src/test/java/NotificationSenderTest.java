@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture; // <-- Добавь импорт
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -28,6 +29,9 @@ public class NotificationSenderTest {
     void sendDelegatesToCorrectChannel() {
         when(emailChannel.type()).thenReturn(ChannelType.EMAIL);
         when(pushChannel.type()).thenReturn(ChannelType.PUSH);
+
+        when(emailChannel.send(message)).thenReturn(CompletableFuture.completedFuture(null));
+
         NotificationSender sender = new NotificationSender(List.of(emailChannel, pushChannel));
 
         sender.send(ChannelType.EMAIL, message);
