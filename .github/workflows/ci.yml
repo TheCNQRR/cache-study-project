@@ -60,5 +60,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
-            ghcr.io/${{ github.repository }}:v1.0
+            ghcr.io/${{ env.REPO_LOWER }}:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}:v1.0
