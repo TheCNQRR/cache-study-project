@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 @Component
 public class UserEventProducer {
 
@@ -28,6 +30,6 @@ public class UserEventProducer {
                         user.getUsername()
                 )
         );
-        logger.info("User register, id={}, username={}", user.getId(), user.getUsername());
+        logger.info("Kafka event sent", kv("topic", "user.registered"), kv("userId", user.getId()));
     }
 }

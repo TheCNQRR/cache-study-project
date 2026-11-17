@@ -16,6 +16,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.HexFormat;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 @Component
 public class UserRegisteredConsumer {
 
@@ -35,7 +37,7 @@ public class UserRegisteredConsumer {
 
     @KafkaListener(topics = "user.registered", groupId = "notification-group")
     public void consume(UserRegisteredEvent event) {
-        logger.info("Consumed event: eventId={}, email={}", event.userId(), event.email());
+        logger.info("Kafka event received", kv("topic", "user.registered"), kv("userId", event.userId()));
 
         int code = secureRandom.nextInt(100000, 1000000);
         String codeHash = sha256(String.valueOf(code));
